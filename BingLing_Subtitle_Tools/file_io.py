@@ -134,10 +134,12 @@ def list_to_file(out_codec, abs_name, file_line_list, is_crlf=False):
         if is_crlf:
             with open(abs_name, "wb") as out_file:
                 out_file.write(out_codec.encode(out_str)[0])
+                # write windows CRLF and UTF-8 with BOM
 
         else:
             with open(abs_name, "w", encoding="utf-8") as out_file:
                 out_file.write(out_str)
+                # write unix LF and UTF-8 without BOM
 
     except (UnicodeDecodeError, UnicodeEncodeError, LookupError) as e:
         print("[fail] (codec error)")

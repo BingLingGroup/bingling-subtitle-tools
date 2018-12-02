@@ -23,7 +23,7 @@ import ass_v4plus_process
 
 def main():
     print()
-    import_dir = "E:\\用户\\Documents\\CL字幕\\2018\\试制"
+    import_dir = "E:\\用户\\Documents\\CL字幕\\2018\\2015字幕成品\\时间轴\\S1"
     export_dir = import_dir + "\\new"
     name_tail = "_new"
     sect = ("[Aegisub Project Garbage]", "[test]")
@@ -34,6 +34,8 @@ def main():
 
     special_msg = "# Exported by BingLing-Subtitle-Tools {ver}".format(ver=__version__)
 
+    if os.path.exists(export_dir) is False:
+        os.makedirs(export_dir)
     ass_v4plus_process.simple_ass_export_batch(import_dir, export_dir, special_msg)
 
     # ass_v4plus_process.delete_ass_sect_batch(import_dir, export_dir, sect=sect)
