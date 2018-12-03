@@ -42,11 +42,11 @@ def get_files_name_from_dire(dire, exte=(".ass", ".ssa")):
     return files_name_list
 
 
-def file_to_list(abs_name, file_line_list, is_forced_lf=True):
+def file_to_list(file_name, file_line_list, is_forced_lf=True):
     """Read a file into a list.
 
     Params:
-    abs_name            -- a file with abs_name about to be read
+    file_name           -- a file with file_name about to be read
     file_line_list      -- a result list, a line per elem
     is_forced_lf        -- force utf-8 without BOM and unix LF file input
                            True by default
@@ -65,7 +65,7 @@ def file_to_list(abs_name, file_line_list, is_forced_lf=True):
     is_crlf = True
 
     try:
-        with open(abs_name, "rb") as in_file:
+        with open(file_name, "rb") as in_file:
             in_codec = codecs.lookup(detect_charset(in_file))
             file_decoded = in_codec.streamreader(in_file)
             for line in file_decoded:
@@ -101,13 +101,16 @@ def file_to_list(abs_name, file_line_list, is_forced_lf=True):
     return fail_c, in_codec, is_crlf
 
 
-def list_to_file(out_codec, abs_name, file_line_list, is_crlf=False):
+def list_to_file(out_codec, file_name, file_line_list, is_lf=True):
     """Write a list into a file.
 
     Params:
-    out_codec           -- the output file codec
-    abs_name            -- a file with abs_name about to be read
+    out_codec           -- the output file codec,
+                           functioned when is_lf is True
+    file_name           -- a file with file_name about to be read
     file_line_list      -- a result list, a line per elem
+    is_lf               -- True for unix LF and UTF-8 without BOM file output
+                           False for windows CRLF and dedicated codec or UTF-8 with BOM
 
     Return:
     fail_c              -- the count for file writing failure
@@ -118,28 +121,29 @@ def list_to_file(out_codec, abs_name, file_line_list, is_crlf=False):
     fail_c = 0
     out_str = ""
 
-    if is_crlf:
-        for elem in file_line_list:
-            out_str += elem
-            if elem != "\r\n":
-                out_str += "\r\n"
-    else:
+    if is_lf:
+        # unix LF
         for elem in file_line_list:
             out_str += elem
             if elem != "\n":
                 out_str += "\n"
-                # windows CRLF or unix LF
+    else:
+        # windows CRLF
+        for elem in file_line_list:
+            out_str += elem
+            if elem != "\r\n":
+                out_str += "\r\n"
 
     try:
-        if is_crlf:
-            with open(abs_name, "wb") as out_file:
-                out_file.write(out_codec.encode(out_str)[0])
-                # write windows CRLF and UTF-8 with BOM
+        if is_lf:
+            # write unix LF and UTF-8 without BOM
+            with open(file_name, "w", encoding="utf-8") as out_file:
+                out_file.write(out_str)
 
         else:
-            with open(abs_name, "w", encoding="utf-8") as out_file:
-                out_file.write(out_str)
-                # write unix LF and UTF-8 without BOM
+            # write windows CRLF and dedicated codec or UTF-8 with BOM
+            with open(file_name, "wb") as out_file:
+                out_file.write(out_codec.encode(out_str)[0])
 
     except (UnicodeDecodeError, UnicodeEncodeError, LookupError) as e:
         print("[fail] (codec error)")

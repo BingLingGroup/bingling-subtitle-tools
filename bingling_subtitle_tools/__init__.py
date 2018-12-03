@@ -32,11 +32,11 @@ def main():
         exec(fp.read(), version)
     __version__ = version["__version__"]
 
-    special_msg = "# Exported by BingLing-Subtitle-Tools {ver}".format(ver=__version__)
+    special_msg = "# Exported by BingLingSubtitleTools {ver}".format(ver=__version__)
 
     if os.path.exists(export_dir) is False:
         os.makedirs(export_dir)
-    ass_v4plus_process.simple_ass_export_batch(import_dir, export_dir, special_msg)
+    ass_v4plus_process.simple_ass_export_batch(import_dir, export_dir, special_msg, export_method=(True, False))
 
     # ass_v4plus_process.delete_ass_sect_batch(import_dir, export_dir, sect=sect)
 

@@ -60,15 +60,14 @@ class SimpleAssEvent:
                     field_name              -- the condition of event classification
                     """
 
-        _field_content_begin = field_content_begin
-        _field_content_end = field_content_end
-        _text_begin = first_text_begin
-        self._field_content = \
-            event_line_list[0][_field_content_begin:_field_content_end]
-        self._text_list = [_text_begin, ]
-        SimpleAssEvent.field_content_list.append(self._field_content)
-        self._event_row = [cur_row, ]
+        self.field_content = \
+            event_line_list[0][field_content_begin:field_content_end]
+        self.text_list = [first_text_begin, ]
+        SimpleAssEvent.field_content_list.append(self.field_content)
+        self.event_row = [cur_row, ]
         SimpleAssEvent.field_name = field_name
+        self.num = 0
+        # marked the position of content tuple
 
         for line in event_line_list[1:]:
             try:
@@ -77,14 +76,14 @@ class SimpleAssEvent:
             except GetFieldContentFailedException:
                 # the end of file or error format
                 break
-            if line.startswith("Dialogue") and self._field_content == line[_field_content_begin:_field_content_end]:
+            if line.startswith("Dialogue") and self.field_content == line[_field_content_begin:_field_content_end]:
                 # if field content is the same and it starts with "Dialogue"
                 # then append to the list
-                self._text_list.append(_text_begin)
+                self.text_list.append(_text_begin)
             else:
                 break
 
-        self._event_row.append(cur_row + len(self._text_list))
+        self.event_row.append(cur_row + len(self.text_list))
         # a python slice end pos
 
     def _add_more_events(self,
@@ -100,9 +99,9 @@ class SimpleAssEvent:
                     first_text_begin        -- the text content begin pos in the first line
                     """
 
-        _last_length = len(self._text_list)
-        self._text_list.append(first_text_begin)
-        self._event_row.append(cur_row)
+        _last_length = len(self.text_list)
+        self.text_list.append(first_text_begin)
+        self.event_row.append(cur_row)
 
         for line in event_line_list[1:]:
             try:
@@ -111,14 +110,14 @@ class SimpleAssEvent:
             except GetFieldContentFailedException:
                 # the end of file or error format
                 break
-            if line.startswith("Dialogue") and self._field_content == line[_field_content_begin:_field_content_end]:
+            if line.startswith("Dialogue") and self.field_content == line[_field_content_begin:_field_content_end]:
                 # if field content is the same and it starts with "Dialogue"
                 # then append to the list
-                self._text_list.append(_text_begin)
+                self.text_list.append(_text_begin)
             else:
                 break
 
-        self._event_row.append(cur_row + len(self._text_list) - _last_length)
+        self.event_row.append(cur_row + len(self.text_list) - _last_length)
         # a python slice end pos
 
 
@@ -326,7 +325,7 @@ def simple_ass_export_txt(ass_file_line_list,
                           is_not_text=False,
                           field_name="Style",
                           content_tuple=("中文字幕", "英文字幕"),
-                          is_forced_lf=True
+                          is_lf=True
                           ):
     """Get field content from the given field name
 
@@ -351,18 +350,19 @@ def simple_ass_export_txt(ass_file_line_list,
                                ref http://moodub.free.fr/video/ass-specs.doc
         content_tuple       -- a content tuple to match, if it is None
                                it will export text grouped by field content
-        is_forced_lf        -- force utf-8 without BOM and unix LF file input
+        is_lf               -- force utf-8 without BOM and unix LF file input
                                True by default
 
         Return:
-        matched_list        -- a list for the ones in content_tuple
+        result_list         -- a list for the ones in content_tuple
                                match the field contents
+                               if content_tuple is empty or None,
+                               result_list will contains all of the field contents
                                [-1, ] for event section miss
                                [-2, ] for field content not match the content_tuple
         fail_c              -- the count for file failure
         """
 
-    matched_list = []
     fail_c = 0
 
     simple_ass_event = None
@@ -370,49 +370,12 @@ def simple_ass_export_txt(ass_file_line_list,
     try:
         row_num = ass_file_line_list.index("[Events]")
     except ValueError:
-        # can't find event section: return -1
-        matched_list.append(-1)
-        return matched_list, fail_c
+        # can't find event section: return [-1, ]
+        result_list = [-1, ]
+        return result_list, fail_c
 
     row_num += 1
-
-    while row_num < len(ass_file_line_list):
-        if ass_file_line_list[row_num].startswith("Dialogue"):
-            try:
-                field_content_begin, field_content_end, text_begin = \
-                    get_field_content_and_text(ass_file_line_list[row_num])
-            except GetFieldContentFailedException:
-                # if it can't find the field content, then try the next line
-                row_num += 1
-                continue
-
-            if content_tuple is not None and len(content_tuple) > 0:
-                # first match the content_tuple
-                try:
-                    content_tuple.index(ass_file_line_list[row_num][field_content_begin:field_content_end])
-                except ValueError:
-                    # if this field content is not what we want, then try the next line
-                    row_num += 1
-                    continue
-
-            # if the content_tuple doesn't exist
-            # or we want to add the field content
-            # we will create a new SimpleAssEvent object
-            simple_ass_event = SimpleAssEvent(ass_file_line_list[row_num:], row_num, field_content_begin,
-                                              field_content_end, text_begin, field_name)
-            row_num = simple_ass_event._event_row[-1]
-            break
-
-        else:
-            # find first elem in simple_ass_event_list
-            row_num += 1
-
-    if simple_ass_event is not None:
-        simple_ass_event_list = [simple_ass_event, ]
-    else:
-        # can't find any event that matched the field content
-        matched_list.append(-2)
-        return matched_list, fail_c
+    i = 0
 
     while row_num < len(ass_file_line_list):
         if ass_file_line_list[row_num].startswith("Dialogue"):
@@ -429,7 +392,46 @@ def simple_ass_export_txt(ass_file_line_list,
                 try:
                     i = content_tuple.index(ass_file_line_list[row_num][field_content_begin:field_content_end])
                 except ValueError:
-                    # if this field content is not what we want, then try the next line
+                    # if this field content is not in the content_tuple, then try the next line
+                    row_num += 1
+                    continue
+
+            # if the content_tuple doesn't exist
+            # or we want to add the field content
+            # we will create a new SimpleAssEvent object
+            simple_ass_event = SimpleAssEvent(ass_file_line_list[row_num:], row_num, field_content_begin,
+                                              field_content_end, text_begin, field_name)
+            simple_ass_event.num = i
+            row_num = simple_ass_event.event_row[-1]
+            break
+
+        else:
+            # find first elem in simple_ass_event_list
+            row_num += 1
+
+    if simple_ass_event is not None:
+        simple_ass_event_list = [simple_ass_event, ]
+    else:
+        # can't find any event that matched the field content: return [-2, ]
+        result_list = [-2, ]
+        return result_list, fail_c
+
+    while row_num < len(ass_file_line_list):
+        if ass_file_line_list[row_num].startswith("Dialogue"):
+            try:
+                field_content_begin, field_content_end, text_begin = \
+                    get_field_content_and_text(ass_file_line_list[row_num])
+            except GetFieldContentFailedException:
+                # if it can't find the field content, then try the next line
+                row_num += 1
+                continue
+
+            if content_tuple is not None and len(content_tuple) > 0:
+                # first match the content_tuple
+                try:
+                    i = content_tuple.index(ass_file_line_list[row_num][field_content_begin:field_content_end])
+                except ValueError:
+                    # if this field content is not in the content_tuple, then try the next line
                     row_num += 1
                     continue
 
@@ -440,7 +442,8 @@ def simple_ass_export_txt(ass_file_line_list,
                     # then create a new SimpleAssEvent object
                     simple_ass_event = SimpleAssEvent(ass_file_line_list[row_num:], row_num, field_content_begin,
                                                       field_content_end, text_begin, field_name)
-                    row_num += len(simple_ass_event._text_list)
+                    simple_ass_event.num = i
+                    row_num += len(simple_ass_event.text_list)
                     simple_ass_event_list.append(simple_ass_event)
                     continue
 
@@ -448,7 +451,7 @@ def simple_ass_export_txt(ass_file_line_list,
                 # then add it
                 simple_ass_event_list[j]._add_more_events(ass_file_line_list[row_num:],
                                                           row_num, text_begin)
-                row_num = simple_ass_event_list[j]._event_row[-1]
+                row_num = simple_ass_event_list[j].event_row[-1]
 
             else:
                 # if the content_tuple doesn't exist
@@ -460,7 +463,7 @@ def simple_ass_export_txt(ass_file_line_list,
                     # then create a new SimpleAssEvent object
                     simple_ass_event = SimpleAssEvent(ass_file_line_list[row_num:], row_num, field_content_begin,
                                                       field_content_end, text_begin, field_name)
-                    row_num += len(simple_ass_event._text_list)
+                    row_num += len(simple_ass_event.text_list)
                     simple_ass_event_list.append(simple_ass_event)
                     continue
 
@@ -468,7 +471,7 @@ def simple_ass_export_txt(ass_file_line_list,
                 # then add it
                 simple_ass_event_list[j]._add_more_events(ass_file_line_list[row_num:],
                                                           row_num, text_begin)
-                row_num = simple_ass_event_list[j]._event_row[-1]
+                row_num = simple_ass_event_list[j].event_row[-1]
 
         else:
             row_num += 1
@@ -479,21 +482,21 @@ def simple_ass_export_txt(ass_file_line_list,
     else:
         tail = []
 
-    # matched_list includes the matched ones in content_tuple
-    matched_list = SimpleAssEvent.field_content_list
-
     k = 0
-    tail.sort()
-    event_zip = list(zip(matched_list, simple_ass_event_list))
-    event_zip.sort(key=lambda item: item[0])
+    if content_tuple is not None and len(content_tuple) > 0:
+        event_zip = zip(SimpleAssEvent.field_content_list, simple_ass_event_list)
+        # sort into content tuple order
+        sorted_event_zip = sorted(event_zip, key=lambda item: item[1].num)
+        # result_list contains the result
+        result_list, sorted_event_list = map(lambda item: list(item), zip(*sorted_event_zip))
 
-    sorted_event_list = []
-    for event in event_zip:
-        sorted_event_list.append(event[1])
+    else:
+        sorted_event_list = simple_ass_event_list
+        result_list = SimpleAssEvent.field_content_list
 
     for event in sorted_event_list:
         i = 0
-        tail.append("_" + event._field_content)
+        tail.append("_" + event.field_content)
         if special_msg is not None:
             temp = [special_msg, ]
             temp_2 = [special_msg, ]
@@ -502,33 +505,34 @@ def simple_ass_export_txt(ass_file_line_list,
             temp_2 = []
 
         if is_not_text is False:
-            while i < len(event._event_row) - 1:
+            while i < len(event.event_row) - 1:
                 j = 0
-                for line in ass_file_line_list[event._event_row[i]:event._event_row[i + 1]]:
-                    temp.append(line[event._text_list[j] + 1:])
+                for line in ass_file_line_list[event.event_row[i]:event.event_row[i + 1]]:
+                    temp.append(line[event.text_list[j] + 1:])
                     j += 1
                 i += 2
 
         else:
-            while i < len(event._event_row) - 1:
+            while i < len(event.event_row) - 1:
                 j = 0
-                for line in ass_file_line_list[event._event_row[i]:event._event_row[i + 1]]:
-                    temp.append(line[event._text_list[j] + 1:])
-                    temp_2.append(line[:event._text_list[j]])
+                for line in ass_file_line_list[event.event_row[i]:event.event_row[i + 1]]:
+                    temp.append(line[event.text_list[j] + 1:])
+                    temp_2.append(line[:event.text_list[j]])
+                    j += 1
                 i += 2
 
             fail_c = \
-                file_io.list_to_file(out_codec, export_file_name + tail[k] + "_t" + ".txt", temp_2)
+                file_io.list_to_file(out_codec, export_file_name + tail[k] + "_t" + ".txt", temp_2, is_lf)
             if fail_c != 0:
                 break
 
         fail_c = \
-            file_io.list_to_file(out_codec, export_file_name + tail[k] + ".txt", temp)
+            file_io.list_to_file(out_codec, export_file_name + tail[k] + ".txt", temp, is_lf)
         if fail_c != 0:
             break
         k += 1
 
-    return matched_list, fail_c
+    return result_list, fail_c
 
 
 def simple_ass_export_batch(import_dir,
@@ -570,6 +574,8 @@ def simple_ass_export_batch(import_dir,
     fail_c = 0
     files_name_list = file_io.get_files_name_from_dire(import_dir)
     is_crlf = True
+    print("The result of exporting .ass file text\
+grouped by event's field content:")
     for elem_name in files_name_list:
         i = 0
         temp = []
@@ -577,28 +583,30 @@ def simple_ass_export_batch(import_dir,
             file_io.file_to_list(import_dir + "\\" + elem_name, temp, is_forced_lf)
         if fail_c != 0:
             break
-        matched_list, fail_c = simple_ass_export_txt(temp,
-                                                     export_dir + "\\" + os.path.splitext(elem_name)[0],
-                                                     special_msg, codec, name_tail,
-                                                     export_method[0], field_name, content_tuple)
-        print("The result of exporting .ass file text\
- grouped by event's field:")
-        print("......\"{field_n}\"".format(field_n=field_name))
-        if len(matched_list) == 1 and len(content_tuple) != 1:
-            if matched_list[0] == -1:
-                print("......Section \"[Event]\" missed")
-            else:
-                print("......No \"{field_n}\" contents matched the field name".format(field_n=field_name))
-        else:
-            for has_matched in matched_list:
-
-                print("......\"{matched}\" exported successfully".format(matched=has_matched))
-            mls = set(matched_list)
+        result_list, fail_c = simple_ass_export_txt(temp,
+                                                    export_dir + "\\" + os.path.splitext(elem_name)[0],
+                                                    special_msg, codec, name_tail,
+                                                    export_method[0], field_name, content_tuple)
+        print("...... .ass file name: \"{file_n}\"".format(file_n=elem_name))
+        print("......  event's field: \"{field_n}\"".format(field_n=field_name))
+        if len(result_list) == 1:
+            if result_list[0] == 0:
+                print("......  The given \"Content Tuple\" is empty. Try to export all of the events.")
+                for result in result_list:
+                    print("...... \"{matched}\" exported successfully".format(matched=result))
+            elif result_list[0] == -1:
+                print("......  Section \"[Event]\" missed")
+            elif result_list[0] == -2:
+                print("...... No \"{field_n}\" contents matched the field name".format(field_n=field_name))
+        elif len(content_tuple) >= 1:
+            for has_matched in result_list:
+                print("......  \"{matched}\" exported successfully".format(matched=has_matched))
+            mls = set(result_list)
             cts = set(content_tuple)
             missed_s = {x for x in cts if x not in mls}
             if len(missed_s) != 0:
                 for has_missed in missed_s:
-                    print("......\"{matched}\" didn't match and export".format(matched=has_missed))
+                    print("......  \"{matched}\" didn't match or export".format(matched=has_missed))
         print()
         SimpleAssEvent.field_content_list.clear()
         SimpleAssEvent.field_name = None
@@ -672,7 +680,7 @@ def delete_ass_sect_batch(import_dir,
         state_list = delete_ass_sect_list(temp, sect)
         name = os.path.splitext(elem_name)[0]
         fail_c = \
-            file_io.list_to_file(codec, export_dir + "\\" + name + name_tail + ".ass", temp)
+            file_io.list_to_file(codec, export_dir + "\\" + name + name_tail + ".ass", temp, is_forced_lf)
         if fail_c != 0:
             break
         print("The result of deleting the section of an .ass file: \"{elem}\"".format(elem=name))
