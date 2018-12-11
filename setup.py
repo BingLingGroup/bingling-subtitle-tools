@@ -1,29 +1,33 @@
 #!/usr/bin/env python
-from setuptools import setup
+import setuptools
+import os
 
-# Get the version.py from bingling-subtitle-tools/version.py without importing the package
+# Get the version from bingling-subtitle-tools/version.py without importing the package
 version = {}
-with open("bingling-subtitle-tools/version.py") as fp:
+with open("bingling_subtitle_tools/version.py") as fp:
     exec(fp.read(), version)
 __version__ = version["__version__"]
 
-with open("README.rst") as readme:
+with open("README.md") as readme:
     long_description = readme.read()
 
-setup(
+setuptools.setup(
     name="bingling_subtitle_tools",
     version=__version__,
-    description="A tool that do batch processing jobs on ASS(Advanced SubStation Alpha)/SSA(Sub Station Alpha) files",
-    author="BingLingGroup",
+    description="A tool that do a batch processing job on ASS(Advanced SubStation Alpha) files",
+    long_description=long_description,
+    author="BingLingFanSub",
     author_email="binglingfansub@gmail.com",
     url="https://github.com/BingLingGroup/bingling-subtitle-tools",
-    py_modules=["batch"],
-    packages=["bingLing_subtitle_tools"],
-    data_files=[("", ["README.rst"])],
-    install_requires=["setuptools", "chardet"],
+    packages=setuptools.find_packages(),
+    include_package_data=True,
+    install_requires=[
+        "chardet"
+    ],
+    data_files=[("", ["README.md"])],
     entry_points="""
     [console_scripts]
-    BingLing_Subtitle_Tools = batch:main
+    bingling_subtitle_tools = bingling_subtitle_tools.bingling_subtitle_tools.__init__:main
     """,
     classifiers=[
         "Development Status :: 2 - Pre-Alpha",
@@ -31,6 +35,5 @@ setup(
         "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
         "Programming Language :: Python :: 3",
         "Topic :: Text Processing",
-    ],
-    long_description=long_description
+    ]
 )

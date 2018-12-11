@@ -43,7 +43,7 @@ def get_files_name_from_dire(dire, exte=(".ass", ".ssa")):
 
 
 def file_to_list(file_name, file_line_list, is_forced_lf=True):
-    """Read a file into a list.
+    """Read a file to a list.
 
     Params:
     file_name           -- a file with file_name about to be read
@@ -102,7 +102,7 @@ def file_to_list(file_name, file_line_list, is_forced_lf=True):
 
 
 def list_to_file(out_codec, file_name, file_line_list, is_lf=True):
-    """Write a list into a file.
+    """Write a list to a file.
 
     Params:
     out_codec           -- the output file codec,
@@ -161,11 +161,11 @@ def list_to_file(out_codec, file_name, file_line_list, is_lf=True):
     return fail_c
 
 
-def file_to_str(abs_name):
-    """Read a file into a multi-line string.
+def file_to_str(file_name):
+    """Read a file to a multi-line string.
 
     Params:
-    abs_name        -- a file with abs_name about to be read
+    file_name       -- a file with file_name about to be read
 
     Return:
     fail_c          -- the count for file opening failure
@@ -180,7 +180,7 @@ def file_to_str(abs_name):
     file_str = ""
 
     try:
-        with open(abs_name, "rb") as in_file:
+        with open(file_name, "rb") as in_file:
             in_codec = codecs.lookup(detect_charset(in_file))
             file_str = in_codec.streamreader(in_file)
 
@@ -200,13 +200,15 @@ def file_to_str(abs_name):
     return fail_c, in_codec, file_str
 
 
-def str_to_file(out_codec, abs_name, file_str):
-    """Write a list into a file.
+def str_to_file(out_codec, out_name, out_str, is_lf=True):
+    """Write a string to a file.
 
     Params:
     out_codec       -- the output file codec
-    abs_name        -- a file with abs_name about to be read
-    file_str        -- a result list, a line per elem
+    out_name        -- a file with out_name about to be read
+    out_str         -- a result list, a line per elem
+    is_lf           -- True for unix LF and UTF-8 without BOM file output
+                       False for windows CRLF and dedicated codec or UTF-8 with BOM
 
     Return:
     fail_c          -- the count for file writing failure
@@ -217,8 +219,15 @@ def str_to_file(out_codec, abs_name, file_str):
     fail_c = 0
 
     try:
-        with open(abs_name, "wb") as out_file:
-            out_file.write(out_codec.encode(file_str)[0])
+        if is_lf:
+            # write unix LF and UTF-8 without BOM
+            with open(out_name, "w", encoding="utf-8") as out_file:
+                out_file.write(out_str)
+
+        else:
+            # write windows CRLF and dedicated codec or UTF-8 with BOM
+            with open(out_name, "wb") as out_file:
+                out_file.write(out_codec.encode(out_str)[0])
 
     except (UnicodeDecodeError, UnicodeEncodeError, LookupError) as e:
         print("[fail] (codec error)")

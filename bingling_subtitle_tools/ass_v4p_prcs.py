@@ -1,11 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""ass_v4plus_classes
+""".ass v4.00+ script format processing module
 """
 
 
 # Import built-in modules
-import argparse
 import codecs
 import os
 import re
@@ -90,11 +89,11 @@ class SimpleAssEvent:
         self.event_row.append(cur_row + len(self.text_list))
         # end in the format of a python slice end pos
 
-    def _add_more_events(self,
-                         event_line_list,
-                         cur_row,
-                         first_text_begin,
-                         ):
+    def add_more_events(self,
+                        event_line_list,
+                        cur_row,
+                        first_text_begin,
+                        ):
         """Initialize a SimpleAssEvent object from event_line_list
 
                     Params:
@@ -326,9 +325,9 @@ def simple_ass_export_txt(ass_file_line_list,
                           special_msg,
                           out_codec,
                           name_tail=("_CN", "_EN"),
-                          is_not_text=False,
-                          field_name="Style",
                           content_tuple=("中文字幕", "英文字幕"),
+                          field_name="Style",
+                          is_not_text=False,
                           is_lf=True
                           ):
     """Get field content from the given field name
@@ -336,24 +335,24 @@ def simple_ass_export_txt(ass_file_line_list,
         Params:
         ass_file_line_list  -- an .ass file line list
         export_file_name    -- export file name
-        special_msg         -- a special message write on the first line of the files
+        special_msg         -- a special message is written on the first line of the files
                                None for nothing to write
         out_codec           -- the output file codec
         name_tail           -- new files name tail tuple, ("_CN", "_EN") by default
                                if name_tail is not empty and it has the same length as the content_tuple
                                new files name will add one of these tails in order
                                otherwise the tail will be the field content
+        content_tuple       -- a content tuple to match, if it is None or a zero-length tuple
+                               it will export text grouped by field content
+        field_name          -- a field name to classify
+                               ref http://moodub.free.fr/video/ass-specs.doc
         export_method       -- a tuple includes two Boolean Objects
                                1st True for text-excluded content export method activated
                                otherwise it will only export text content
                                one .txt per one .ass field content
-                               2nd True for changing export name into "E" + "%nd"
+                               2nd True for changing export name as "E" + "%nd"
                                otherwise export name will stay the same
                                or add name_tail if content_tuple is not empty
-        field_name          -- a field name to classify
-                               ref http://moodub.free.fr/video/ass-specs.doc
-        content_tuple       -- a content tuple to match, if it is None or a zero-length tuple
-                               it will export text grouped by field content
         is_lf               -- force utf-8 without BOM and unix LF file input
                                True by default
 
@@ -391,7 +390,7 @@ def simple_ass_export_txt(ass_file_line_list,
                 row_num += 1
                 continue
 
-            if content_tuple is not None and len(content_tuple) > 0:
+            if content_tuple and len(content_tuple) > 0:
                 # first match the content_tuple
                 try:
                     j = content_tuple.index(ass_file_line_list[row_num][field_content_begin:field_content_end])
@@ -430,7 +429,7 @@ def simple_ass_export_txt(ass_file_line_list,
                 row_num += 1
                 continue
 
-            if content_tuple is not None and len(content_tuple) > 0:
+            if content_tuple and len(content_tuple) > 0:
                 # first match the content_tuple
                 try:
                     j = content_tuple.index(ass_file_line_list[row_num][field_content_begin:field_content_end])
@@ -453,8 +452,8 @@ def simple_ass_export_txt(ass_file_line_list,
 
                 # if this field content is already in the field_content_list
                 # then add it
-                simple_ass_event_list[i]._add_more_events(ass_file_line_list[row_num:],
-                                                          row_num, text_begin)
+                simple_ass_event_list[i].add_more_events(ass_file_line_list[row_num:],
+                                                         row_num, text_begin)
                 row_num = simple_ass_event_list[i].event_row[-1]
 
             else:
@@ -473,23 +472,23 @@ def simple_ass_export_txt(ass_file_line_list,
 
                 # if this field content is already in the field_content_list
                 # then add it
-                simple_ass_event_list[i]._add_more_events(ass_file_line_list[row_num:],
-                                                          row_num, text_begin)
+                simple_ass_event_list[i].add_more_events(ass_file_line_list[row_num:],
+                                                         row_num, text_begin)
                 row_num = simple_ass_event_list[i].event_row[-1]
 
         else:
             row_num += 1
 
-    if content_tuple is not None and name_tail is not None and len(name_tail) == len(content_tuple):
+    if content_tuple and name_tail and len(name_tail) == len(content_tuple):
         tail = list(name_tail)
 
     else:
         tail = []
 
     k = 0
-    if content_tuple is not None and len(content_tuple) > 0:
+    if content_tuple and len(content_tuple) > 0:
         event_zip = zip(SimpleAssEvent.field_content_list, simple_ass_event_list)
-        # sort into content tuple order
+        # keep the same order as content tuple
         sorted_event_zip = sorted(event_zip, key=lambda item: item[1].num)
         # result_list contains the result
         result_list, sorted_event_list = map(lambda item: list(item), zip(*sorted_event_zip))
@@ -505,34 +504,48 @@ def simple_ass_export_txt(ass_file_line_list,
         # i for event.text_list's index
         tail.append("_" + event.field_content)
         if special_msg is not None:
-            temp = [special_msg, ]
-            temp_2 = [special_msg, ]
+            temp = special_msg[:]
+            temp_2 = special_msg[:]
         else:
-            temp = []
-            temp_2 = []
+            temp = ""
+            temp_2 = ""
 
         if is_not_text is False:
             while j < len(event.event_row) - 1:
                 for line in ass_file_line_list[event.event_row[j]:event.event_row[j + 1]]:
-                    temp.append(line[event.text_list[i] + 1:])
+                    if is_lf:
+                        # unix LF
+                        temp += "\n"
+                    else:
+                        # windows CRLF
+                        temp += "\r\n"
+                    temp += line[event.text_list[i] + 1:]
                     i += 1
                 j += 2
 
         else:
             while j < len(event.event_row) - 1:
                 for line in ass_file_line_list[event.event_row[j]:event.event_row[j + 1]]:
-                    temp.append(line[event.text_list[i] + 1:])
-                    temp_2.append(line[:event.text_list[i] + 1])
+                    if is_lf:
+                        # unix LF
+                        temp += "\n"
+                        temp_2 += "\n"
+                    else:
+                        # windows CRLF
+                        temp += "\r\n"
+                        temp_2 += "\r\n"
+                    temp += line[event.text_list[i] + 1:]
+                    temp_2 += line[:event.text_list[i] + 1]
                     i += 1
                 j += 2
 
             fail_c = \
-                file_io.list_to_file(out_codec, export_file_name + tail[k] + "_t" + ".txt", temp_2, is_lf)
+                file_io.str_to_file(out_codec, export_file_name + tail[k] + "_t" + ".txt", temp_2, is_lf)
             if fail_c != 0:
                 break
 
         fail_c = \
-            file_io.list_to_file(out_codec, export_file_name + tail[k] + ".txt", temp, is_lf)
+            file_io.str_to_file(out_codec, export_file_name + tail[k] + ".txt", temp, is_lf)
         if fail_c != 0:
             break
         k += 1
@@ -543,69 +556,74 @@ def simple_ass_export_txt(ass_file_line_list,
 def simple_ass_export_batch(import_dir,
                             export_dir,
                             special_msg,
-                            name_tail=("_CN", "_EN"),
-                            export_method=(False, False),
                             field_name="Style",
+                            name_tail=("_CN", "_EN"),
                             content_tuple=("中文字幕", "英文字幕"),
+                            export_method=(False, False),
                             is_forced_lf=True
                             ):
-    """Get field content from the given field name
+    """Do a batch job on exporting .ass files to txt files.
 
         Params:
         import_dir          -- .ass files import direction
         export_dir          -- .ass files export direction
-        special_msg         --
+        special_msg         -- a special message is written on the first line of the files
+                               None for nothing to write
+        field_name          -- a field name to classify
+                               ref http://moodub.free.fr/video/ass-specs.doc
         name_tail           -- new files name tail tuple, ("_CN", "_EN") by default
                                if name_tail is not empty and it has the same length as the content_tuple
                                new files name will add one of these tails in order
+        content_tuple       -- a content tuple to match, if it is None or a zero-length tuple
+                               it will export text grouped by field content
         export_method       -- a tuple includes two Boolean Objects
                                1nd True for text-excluded content export method activated
                                otherwise it will only export text content
                                one .txt per one .ass field content
-                               2rd True for changing export name into "E" + "%nd"
+                               2rd True for changing export name into
+                               "E" + the number already in the file name
                                otherwise export name will stay the same
                                or add name_tail if content_tuple is not empty
-        field_name          -- a field name to classify
-                               ref http://moodub.free.fr/video/ass-specs.doc
-        content_tuple       -- a content tuple to match, if it is None or a zero-length tuple
-                               it will export text grouped by field content
         is_forced_lf        -- force utf-8 without BOM and unix LF file input
                                True by default
-
-        Return:
-        fail_c              -- the count for file failure
         """
 
     fail_c = 0
+    # the count for file failure
     files_name_list = file_io.get_files_name_from_dire(import_dir)
     is_crlf = True
     print("The result of exporting .ass file text\
  grouped by event's field content:")
     for elem_name in files_name_list:
+        print("...... .ass file name: \"{file_n}\"".format(file_n=elem_name))
         i = 0
         temp = []
         fail_c, codec, is_crlf = \
             file_io.file_to_list(import_dir + "\\" + elem_name, temp, is_forced_lf)
         if fail_c != 0:
             break
+        if export_method[1]:
+            num_list = re.findall(r"\d+\.?\d*", elem_name)
+            if num_list and len(num_list) > 0:
+                elem_name = "E" + str(num_list[0])
         result_list, fail_c = simple_ass_export_txt(temp,
                                                     export_dir + "\\" + os.path.splitext(elem_name)[0],
                                                     special_msg, codec, name_tail,
                                                     export_method[0], field_name, content_tuple)
-        print("...... .ass file name: \"{file_n}\"".format(file_n=elem_name))
+        print("......  output file name: \"{file_n}\"".format(file_n=elem_name))
         print("......  event's field: \"{field_n}\"".format(field_n=field_name))
         if len(result_list) == 1:
             if result_list[0] == -1:
                 print("......  Section \"[Event]\" missed")
             elif result_list[0] == -2:
                 print("...... No \"{field_n}\" contents matched the field name".format(field_n=field_name))
-        elif content_tuple is None or len(content_tuple) == 0:
+        elif not content_tuple or len(content_tuple) == 0:
             print("......  The given \"Content Tuple\" is empty. Try to export all of the events.")
             for result in result_list:
-                print("...... \"{matched}\" exported successfully".format(matched=result))
+                print("......  \"{matched}\" exported successfully".format(matched=result))
         else:
             for has_matched in result_list:
-                print("......  \"{matched}\" exported successfully".format(matched=has_matched))
+                print("......   \"{matched}\" exported successfully".format(matched=has_matched))
             mls = set(result_list)
             cts = set(content_tuple)
             missed_s = {x for x in cts if x not in mls}
@@ -613,6 +631,8 @@ def simple_ass_export_batch(import_dir,
                 for has_missed in missed_s:
                     print("......  \"{matched}\" didn't match or export".format(matched=has_missed))
         print()
+        print("All done: \n\t{scs_c} success, {fai_c} fail."
+              .format(scs_c=files_name_list.count - fail_c, fai_c=fail_c))
         SimpleAssEvent.field_content_list.clear()
         SimpleAssEvent.field_name = None
         del temp
@@ -657,7 +677,7 @@ def delete_ass_sect_batch(import_dir,
                           name_tail="_new",
                           sect=("[Aegisub Project Garbage]", ),
                           is_forced_lf=True):
-    """Delete .ass sections in several .ass files in direction with import_dir from the given sect tuple.
+    """Do a batch job on deleting .ass files sections.
 
         Params:
         import_dir      -- .ass files import direction
