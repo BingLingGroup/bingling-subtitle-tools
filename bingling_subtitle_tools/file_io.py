@@ -25,11 +25,11 @@ def get_files_name_from_dire(dire, exte=(".ass", ".ssa")):
 
     Params:
     dire                -- a directory String
-    exte                -- extensions Tuple
+    exte                -- extensions filter_tuple
 
     Return:
     files_name_list     -- a file name list contains files whose extension
-                        -- matches the given string exte
+                        -- filters the given string exte
     """
 
     files_name_list = []
@@ -88,15 +88,15 @@ def file_to_list(file_name, file_line_list, is_forced_lf=True):
     except (UnicodeDecodeError, UnicodeEncodeError, LookupError) as e:
         print("[fail] (codec error)")
         print(e, file=sys.stderr)
-        fail_c += 1
+        fail_c = 1
     except ValueError as e:
         print("[fail] (irregular format)")
         print(e, file=sys.stderr)
-        fail_c += 1
+        fail_c = 1
     except IOError as e:
         print("[fail] (IO error)")
         print(e, file=sys.stderr)
-        fail_c += 1
+        fail_c = 1
 
     return fail_c, in_codec, is_crlf
 
@@ -148,15 +148,15 @@ def list_to_file(out_codec, file_name, file_line_list, is_lf=True):
     except (UnicodeDecodeError, UnicodeEncodeError, LookupError) as e:
         print("[fail] (codec error)")
         print(e, file=sys.stderr)
-        fail_c += 1
+        fail_c = 1
     except ValueError as e:
         print("[fail] (irregular format)")
         print(e, file=sys.stderr)
-        fail_c += 1
+        fail_c = 1
     except IOError as e:
         print("[fail] (IO error)")
         print(e, file=sys.stderr)
-        fail_c += 1
+        fail_c = 1
 
     return fail_c
 
@@ -187,15 +187,15 @@ def file_to_str(file_name):
     except (UnicodeDecodeError, UnicodeEncodeError, LookupError) as e:
         print("[fail] (codec error)")
         print(e, file=sys.stderr)
-        fail_c += 1
+        fail_c = 1
     except ValueError as e:
         print("[fail] (irregular format)")
         print(e, file=sys.stderr)
-        fail_c += 1
+        fail_c = 1
     except IOError as e:
         print("[fail] (IO error)")
         print(e, file=sys.stderr)
-        fail_c += 1
+        fail_c = 1
 
     return fail_c, in_codec, file_str
 
@@ -232,15 +232,15 @@ def str_to_file(out_codec, out_name, out_str, is_lf=True):
     except (UnicodeDecodeError, UnicodeEncodeError, LookupError) as e:
         print("[fail] (codec error)")
         print(e, file=sys.stderr)
-        fail_c += 1
+        fail_c = 1
     except ValueError as e:
         print("[fail] (irregular format)")
         print(e, file=sys.stderr)
-        fail_c += 1
+        fail_c = 1
     except IOError as e:
         print("[fail] (IO error)")
         print(e, file=sys.stderr)
-        fail_c += 1
+        fail_c = 1
 
     return fail_c
 

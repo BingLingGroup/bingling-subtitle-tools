@@ -14,7 +14,7 @@ with open("README.md") as readme:
 setuptools.setup(
     name="bingling_subtitle_tools",
     version=__version__,
-    description="A tool that do a batch processing job on ASS(Advanced SubStation Alpha) files",
+    description="A tool that do batch processing jobs on ASS(Advanced SubStation Alpha) files",
     long_description=long_description,
     author="BingLingFanSub",
     author_email="binglingfansub@gmail.com",
