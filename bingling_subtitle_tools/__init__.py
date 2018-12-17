@@ -49,6 +49,7 @@ Bug report: https://github.com/BingLingGroup/bingling-subtitle-tools""",
                         help="""Name(s) of the output directory.
                         Functions when direction(s) exist(s)
                         and it has the same number of the input.
+                        Otherwise it will try the default value.
                         [arg_num ≥ 0]
                         [default: Make a new folder named \"new\"
                         in the input directory]""")
@@ -66,7 +67,7 @@ Bug report: https://github.com/BingLingGroup/bingling-subtitle-tools""",
                         default=" ", const="", metavar="STRING",
                         help="""-es: A custom message is written
                         on the first line of the output files.
-                        Using the option without argument for no extra message output.
+                        Using the option without argument for no extra message export.
                         [arg_num = 0 or 1]
                         [default: # Exported by BingLingSubtitleTools {ver}]""".format(ver=__version__))
     parser.add_argument("-nts", "--name-tails", nargs="*",
@@ -82,7 +83,7 @@ Bug report: https://github.com/BingLingGroup/bingling-subtitle-tools""",
                         [arg_num ≥ 0]
                         [default: %(default)s]""")
     parser.add_argument("-ft", "--filter", nargs="*",
-                        default=["中文字幕", "英文字幕", ], metavar="FIELD_CONTENT",
+                        default=["中文字幕", "英文字幕", ], dest="filter_", metavar="FIELD_CONTENT",
                         help="""-es: Field content(s) to filter the events.
                         Using the option without argument 
                         for filter disabled and all the events will export to files 
@@ -180,7 +181,7 @@ Using \"{inp}\" instead.\n""".format(inp=args.output[i]))
                                                      custom_msg=args.custom_msg,
                                                      field_name=args.field_name,
                                                      name_tail=args.name_tails,
-                                                     filter_tuple=args.filter,
+                                                     filter_tuple=args.filter_,
                                                      export_method=(args.text_excluded, args.rename_number),
                                                      is_forced_lf=not args.no_forced_encoding
                                                      )
