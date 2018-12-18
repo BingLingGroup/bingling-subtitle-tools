@@ -328,8 +328,7 @@ def simple_ass_export_txt(ass_file_line_list,
                           name_tail=("_CN", "_EN"),
                           filter_tuple=("中文字幕", "英文字幕"),
                           field_name="Style",
-                          is_not_text=False,
-                          is_lf=True
+                          export_method=(True, False, False)
                           ):
     """Get field content from the given field name
 
@@ -347,15 +346,14 @@ def simple_ass_export_txt(ass_file_line_list,
                                it will export text grouped by field content
         field_name          -- a field name to classify
                                ref http://moodub.free.fr/video/ass-specs.doc
-        export_method       -- a tuple includes two Boolean Objects
-                               1st True for text-excluded content export method activated
+        export_method       -- a tuple includes 4 Boolean Objects
+                               1st True for forcing utf-8 without BOM and unix LF file input
+                               or it will use the same encoding
+                               as the input file with the windows CRLF
+                               2nd True for text-excluded content export method activated
                                otherwise it will only export text content
                                one .txt per one .ass field content
-                               2nd True for changing export name as "E" + "%nd"
-                               otherwise export name will stay the same
-                               or add name_tail if filter_tuple is not empty
-        is_lf               -- force utf-8 without BOM and unix LF file input
-                               True by default
+                               3rd True for Keeping the override codes
 
         Return:
         result_list         -- a list for the ones in filter_tuple
@@ -511,13 +509,16 @@ def simple_ass_export_txt(ass_file_line_list,
             temp = ""
             temp_2 = ""
 
-        if is_not_text is False:
+        if not export_method[1]:
             while j < len(event.event_row) - 1:
                 for line in ass_file_line_list[event.event_row[j]:event.event_row[j + 1]]:
                     # traverse every part of the event
-                    temp += line[event.text_list[i] + 1:]
-                    # get every event's text
-                    if is_lf:
+                    if not export_method[2]:
+                        temp += "".join(re.compile(r'{.*?}').split(line[event.text_list[i] + 1:]))
+                    else:
+                        temp += line[event.text_list[i] + 1:]
+                        # get every event's text
+                    if export_method[0]:
                         # unix LF
                         temp += "\n"
                     else:
@@ -531,10 +532,13 @@ def simple_ass_export_txt(ass_file_line_list,
         else:
             while j < len(event.event_row) - 1:
                 for line in ass_file_line_list[event.event_row[j]:event.event_row[j + 1]]:
-                    temp += line[event.text_list[i] + 1:]
                     # get the content which excludes the text
+                    if not export_method[2]:
+                        temp += "".join(re.compile(r'{.*?}').split(line[event.text_list[i] + 1:]))
+                    else:
+                        temp += line[event.text_list[i] + 1:]
                     temp_2 += line[:event.text_list[i] + 1]
-                    if is_lf:
+                    if export_method[0]:
                         # unix LF
                         temp += "\n"
                         temp_2 += "\n"
@@ -546,12 +550,12 @@ def simple_ass_export_txt(ass_file_line_list,
                 j += 2
 
             fail_c = \
-                file_io.str_to_file(out_codec, export_file_name + tail[k] + "_t" + ".txt", temp_2, is_lf)
+                file_io.str_to_file(out_codec, export_file_name + tail[k] + "_t" + ".txt", temp_2, export_method[0])
             if fail_c != 0:
                 break
 
         fail_c = \
-            file_io.str_to_file(out_codec, export_file_name + tail[k] + ".txt", temp, is_lf)
+            file_io.str_to_file(out_codec, export_file_name + tail[k] + ".txt", temp, export_method[0])
         if fail_c != 0:
             break
         k += 1
@@ -567,8 +571,7 @@ def simple_ass_export_batch(import_dir,
                             field_name="Style",
                             name_tail=("_CN", "_EN"),
                             filter_tuple=("中文字幕", "英文字幕"),
-                            export_method=(False, False),
-                            is_forced_lf=True
+                            export_method=(False, False, True, False)
                             ):
     """Do a batch job on exporting .ass files to txt files.
 
@@ -582,18 +585,20 @@ def simple_ass_export_batch(import_dir,
         name_tail           -- new files name tail tuple, ("_CN", "_EN") by default
                                if name_tail is not empty and it has the same length as the filter_tuple
                                new files name will add one of these tails in order
-        filter_tuple       -- a content tuple to match, if it is None or a zero-length tuple
+        filter_tuple        -- a content tuple to match, if it is None or a zero-length tuple
                                it will export text grouped by field content
-        export_method       -- a tuple includes two Boolean Objects
-                               1nd True for text-excluded content export method activated
-                               otherwise it will only export text content
-                               one .txt per one .ass field content
-                               2rd True for changing export name into
+        export_method       -- a tuple includes 4 Boolean Objects
+                               1st True for forcing utf-8 without BOM and unix LF file input
+                               or it will use the same encoding
+                               as the input file with the windows CRLF
+                               2nd True for changing export name into
                                "E" + the number already in the file name
                                otherwise export name will stay the same
                                or add name_tail if filter_tuple is not empty
-        is_forced_lf        -- force utf-8 without BOM and unix LF file input
-                               True by default
+                               3rd True for text-excluded content export method activated
+                               otherwise it will only export text content
+                               one .txt per one .ass field content
+                               4th True for Keeping the override codes
         """
 
     fail_c = 0
@@ -608,13 +613,15 @@ def simple_ass_export_batch(import_dir,
         temp = []
         print("...... .ass file name: \"{file_n}\"".format(file_n=elem_name))
         fail_c, codec, is_crlf = \
-            file_io.file_to_list(import_dir + "\\" + elem_name, temp, is_forced_lf)
+            file_io.file_to_list(import_dir + "\\" + elem_name, temp, export_method[0])
         if fail_c != 0:
             break
         if export_method[1]:
             num_list = re.findall(r"\d+\.?\d*", elem_name)
             if num_list and len(num_list) > 0:
                 elem_name = "E" + str(num_list[0])
+        exp_m = [not is_crlf]
+        exp_m.extend(export_method[2:4])
         result_list, fail_c = simple_ass_export_txt(ass_file_line_list=temp,
                                                     export_file_name=export_dir + "\\" + os.path.splitext(elem_name)[0],
                                                     custom_msg=custom_msg,
@@ -622,8 +629,7 @@ def simple_ass_export_batch(import_dir,
                                                     name_tail=name_tail,
                                                     filter_tuple=filter_tuple,
                                                     field_name=field_name,
-                                                    is_not_text=export_method[0],
-                                                    is_lf=not is_crlf
+                                                    export_method=exp_m
                                                     )
         print("......  output file name: \"{file_n}\"".format(file_n=elem_name))
         print("......  event's field: \"{field_n}\"".format(field_n=field_name))

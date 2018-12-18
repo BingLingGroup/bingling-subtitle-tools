@@ -41,13 +41,18 @@
 # X:\xxx\xxx (Like the paths in windows file explorer)
 
 # Make sure the arguments are put on the right side of the equal sign.
+# The "default" in the comment means
+# if this config file don't contain this option,
+# the program will set a default value for it.
 # The "arg_num" in the comment means if the option is input, the number of arguments is required.
 # The "arg_type" in the comment means the argument type. Make sure the arguments are used in the proper way.
 # The "-xx: " in the help means it works when "xx" option is input.
+# If you are not using the function, you can omit it and its sub options
 
 input_ = ["D:\\example\\input", ]
 # Path(s) or file name(s) of the input .ass file(s).
 # arg_type = Tuple
+# default = (current command line direction)
 # arg_num ≥ 0
 
 output = ["D:\\example\\output", ]
@@ -57,29 +62,31 @@ output = ["D:\\example\\output", ]
 # Otherwise it will try to make a new folder named \"new\"
 # in the input directory
 # arg_type = Tuple
+# default = (Make a new folder named \"new\" in the input directory)
 # arg_num ≥ 0
 
 exp_smp = True
 # Enable a function:
 # do a batch job on exporting .ass file(s) to txt file(s).
 # arg_type = Boolean (True/False) (Remember to capitalize)
+# default = False
 # arg_num = 0
 
 field_name = "Style"
 # -es: A Field name to separate .ass files into txt files.
 # Functions when -es is used.
 # arg_type = String (Recommend using the event field name in .ass)
+# default = Style
 # arg_num = 0 or 1
 
 custom_msg = " "
 # -es: A custom message is written
 # on the first line of the output files.
-# " " (one white space) for default value
 # "" (nothing) for no extra message export
 # arg_type = String
-# arg_num = 0 or 1
-# default: # Exported by BingLingSubtitleTools x.x.x
+# default = "# Exported by BingLingSubtitleTools x.x.x"
 # (x.x.x means current package version)
+# arg_num = 0 or 1
 
 name_tails = ["_CN", "_EN", ]
 # -es: The output files' name tail(s).
@@ -89,6 +96,7 @@ name_tails = ["_CN", "_EN", ]
 # Functions when name tails have the same number as
 # the ones after \"filter\".
 # arg_type = Tuple
+# default = ["_CN", "_EN", ]
 # arg_num ≥ 0
 
 filter_ = ["中文字幕", "英文字幕", ]
@@ -96,18 +104,21 @@ filter_ = ["中文字幕", "英文字幕", ]
 # [] for filter disabled and all the events will export to files
 # separated by their field contents under the specific field name.
 # arg_type = Tuple
+# default = ["中文字幕", "英文字幕", ]
 # arg_num ≥ 0
 
 text_excluded = False
 # -es: Enable output for text-excluded part,
 # which is separated into a file with a "_t" name tail
 # arg_type = Boolean (True/False) (Remember to capitalize)
+# default = False
 # arg_num = 0
 
 rename_number = False
 # -es: Enable changing the export name into
 # a kind of format like "E" + the number already in the file name.
 # arg_type = Boolean (True/False) (Remember to capitalize)
+# default = False
 # arg_num = 0
 
 no_forced_encoding = False
@@ -115,22 +126,32 @@ no_forced_encoding = False
 # equal to utf-8 with unix LF and it will use the same encoding
 # as the input file with the windows CRLF.
 # arg_type = Boolean (True/False) (Remember to capitalize)
+# default = False
 # arg_num = 0
+
+keep_override_code = False
+# Keep the override codes (similar words are override tags
+# by http://docs.aegisub.org/3.2/ASS_Tags/) instead of deleting them.
+# default = False
+# [arg_num = 0]
 
 del_sect = False
 # Enable a function: do a batch job on deleting .ass section(s) in .ass file(s).
 # arg_type = Boolean (True/False) (Remember to capitalize)
+# default = False
 # arg_num = 0
 
 sect_name = ["[Aegisub Project Garbage]", ]
 # ds: The section name(s) to Delete.
 # arg_type = Tuple
+# default = ["[Aegisub Project Garbage]", ]
 # arg_num > 0
 
 name_tail = "_new"
 # -ds: The output files' name tail.
 # [] for no name tail output.
 # arg_type = String
+# default = "_new"
 # arg_num = 0 or 1
 
 overwrite = False
@@ -139,9 +160,10 @@ overwrite = False
 # and the "-nt/--name-tail" option.
 # Not using this option will prevent any attempts to overwrite the files.
 # arg_type = Boolean (True/False) (Remember to capitalize)
+# default = False
 # arg_num = 0
 
-# the code below is a config without comment
+# the code below is a config without comments
 # input_ = ["D:\\example\\input", ]
 # output = ["D:\\example\\output", ]
 # exp_smp = True
@@ -152,6 +174,7 @@ overwrite = False
 # text_excluded = False
 # rename_number = False
 # no_forced_encoding = False
+# keep_override_code = False
 # del_sect = False
 # sect_name = ["[Aegisub Project Garbage]", ]
 # name_tail = "_new"

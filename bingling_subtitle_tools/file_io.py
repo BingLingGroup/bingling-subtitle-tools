@@ -177,12 +177,12 @@ def file_to_str(file_name):
 
     fail_c = 0
     in_codec = codecs.lookup("utf-8")
-    file_str = ""
+    file_str = None
 
     try:
         with open(file_name, "rb") as in_file:
             in_codec = codecs.lookup(detect_charset(in_file))
-            file_str = in_codec.streamreader(in_file)
+            file_str = in_codec.streamreader(in_file).read()
 
     except (UnicodeDecodeError, UnicodeEncodeError, LookupError) as e:
         print("[fail] (codec error)")

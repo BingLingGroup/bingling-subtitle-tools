@@ -14,9 +14,15 @@ import argparse
 
 # Any changes to the path and your own modules
 import ass_v4p_prcs
+import file_io
 
 
-def _get_args():
+class Bunch(object):
+    def __init__(self, adict):
+        self.__dict__.update(adict)
+
+
+def get_cmd_args():
     version = {}
     with open("version.py") as fp:
         exec(fp.read(), version)
@@ -34,7 +40,7 @@ Author: BingLingFanSub
 Bug report: https://github.com/BingLingGroup/bingling-subtitle-tools""",
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
 
-    parser.add_argument("-c", "--config", nargs=1,
+    parser.add_argument("-c", "--config",
                         help="""A config file stores the command line options and arguments.
                         Currently only support .py format.
                         If using, other options will be overridden.
@@ -103,6 +109,10 @@ Bug report: https://github.com/BingLingGroup/bingling-subtitle-tools""",
                         equal to utf-8 with unix LF and it will use the same encoding 
                         as the input file with the windows CRLF.
                         [arg_num = 0]""")
+    parser.add_argument("-koc", "--keep-override-code", action="store_true",
+                        help="""Keep the override codes (similar words are override tags
+                        by http://docs.aegisub.org/3.2/ASS_Tags/) instead of deleting them.  
+                        [arg_num = 0]""")
     parser.add_argument("-ds", "--del-sect", action="store_true",
                         help="Enable a function: do a batch job on deleting .ass section(s) in .ass file(s).\
                         [arg_num = 0]")
@@ -130,20 +140,60 @@ Bug report: https://github.com/BingLingGroup/bingling-subtitle-tools""",
     return parser.parse_args(), __version__
 
 
-def main():
-    args, __version__ = _get_args()
+def set_default_dict(arg_dict):
+    if "input_" not in arg_dict:
+        arg_dict["input_"] = [os.getcwd(), ]
+    if "output" not in arg_dict:
+        arg_dict["output"] = []
+    if "exp_smp" not in arg_dict:
+        arg_dict["exp_smp"] = False
+    if "field_name" not in arg_dict:
+        arg_dict["field_name"] = "Style"
+    if "custom_msg" not in arg_dict:
+        arg_dict["custom_msg"] = " "
+    if "name_tails" not in arg_dict:
+        arg_dict["name_tails"] = ["_CN", "_EN", ]
+    if "filter_" not in arg_dict:
+        arg_dict["filter_"] = ["中文字幕", "英文字幕", ]
+    if "text_excluded" not in arg_dict:
+        arg_dict["text_excluded"] = False
+    if "rename_number" not in arg_dict:
+        arg_dict["rename_number"] = False
+    if "no_forced_encoding" not in arg_dict:
+        arg_dict["no_forced_encoding"] = False
+    if "keep_override_code" not in arg_dict:
+        arg_dict["keep_override_code"] = False
+    if "del_sect" not in arg_dict:
+        arg_dict["del_sect"] = False
+    if "sect_name" not in arg_dict:
+        arg_dict["sect_name"] = ["[Aegisub Project Garbage]", ]
+    if "name_tail" not in arg_dict:
+        arg_dict["name_tail"] = "_new"
+    if "overwrite" not in arg_dict:
+        arg_dict["overwrite"] = False
 
+
+def main():
+    args, __version__ = get_cmd_args()
+
+    print()
     arg_dict = {}
     if args.config and len(args.config) > 0:
         if args.config.endswith(".py"):
-            with open(args.config) as fp:
-                exec(fp.read(), arg_dict)
-                args = arg_dict
+            fail_c, in_codec, arg_str = file_io.file_to_str(args.config)
+            if fail_c == 0:
+                exec(arg_str, arg_dict)
+                set_default_dict(arg_dict)
+                args = Bunch(arg_dict)
                 print(".py config file detected. Read successfully.")
+
+            else:
+                print("File's codec not supported.")
+                return
         else:
             print("This config file format currently not supported.")
+            return
 
-    print()
     if not args.del_sect and not args.exp_smp:
         print("No works done! Check your options.")
         return
@@ -182,8 +232,10 @@ Using \"{inp}\" instead.\n""".format(inp=args.output[i]))
                                                      field_name=args.field_name,
                                                      name_tail=args.name_tails,
                                                      filter_tuple=args.filter_,
-                                                     export_method=(args.text_excluded, args.rename_number),
-                                                     is_forced_lf=not args.no_forced_encoding
+                                                     export_method=(args.no_forced_encoding,
+                                                                    args.rename_number,
+                                                                    args.text_excluded,
+                                                                    args.keep_override_code)
                                                      )
 
                 print("\nSimply exporting .ass in \"{inp}\" are all done.\n".format(inp=input_file))
