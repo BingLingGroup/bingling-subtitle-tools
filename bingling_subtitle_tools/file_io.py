@@ -51,7 +51,7 @@ def file_to_list(file_name, file_line_list, is_forced_lf=True):
     Return:
     fail_c              -- the count for file opening failure
     in_codec            -- the file input codec
-    is_crlf             -- True for a windows .ass file, False for a unix .ass file
+    is_lf               -- True for a unix .ass file, False for a windows .ass file
 
     Modified from https://github.com/sorz/asstosrt. See /asstosrt/MIT LICENSE
     """
@@ -59,7 +59,7 @@ def file_to_list(file_name, file_line_list, is_forced_lf=True):
     fail_c = 0
     in_codec = codecs.lookup("utf-8")
     crlf_is_detected = False
-    is_crlf = True
+    is_lf = False
 
     try:
         with open(file_name, "rb") as in_file:
@@ -69,16 +69,16 @@ def file_to_list(file_name, file_line_list, is_forced_lf=True):
                 if line != "\r\n" and line != "\n":
                     # not windows CRLF or unix LF
                     line = line.strip()
+                elif is_forced_lf is True:
+                    is_lf = True
+                    if line == "\r\n":
+                        line = "\n"
                 elif is_forced_lf is False and crlf_is_detected is False:
                     crlf_is_detected = True
                     if line == "\r\n":
-                        is_crlf = True
+                        is_lf = False
                     else:
-                        is_crlf = False
-                elif is_forced_lf is True:
-                    is_crlf = True
-                    if line == "\r\n":
-                        line = "\n"
+                        is_lf = True
 
                 file_line_list.append(line)
 
@@ -95,16 +95,16 @@ def file_to_list(file_name, file_line_list, is_forced_lf=True):
         print(e, file=sys.stderr)
         fail_c = 1
 
-    return fail_c, in_codec, is_crlf
+    return fail_c, in_codec, is_lf
 
 
-def list_to_file(out_codec, file_name, file_line_list, is_lf=True):
+def list_to_file(out_codec, out_name, file_line_list, is_lf=True):
     """Write a list to a file.
 
     Params:
     out_codec           -- the output file codec,
                            functioned when is_lf is True
-    file_name           -- a file with file_name about to be read
+    out_name            -- a file with out_name about to be read
     file_line_list      -- a result list, a line per elem
     is_lf               -- True for unix LF and UTF-8 without BOM file output
                            False for windows CRLF and dedicated codec or UTF-8 with BOM
@@ -134,13 +134,11 @@ def list_to_file(out_codec, file_name, file_line_list, is_lf=True):
     try:
         if is_lf:
             # write unix LF and UTF-8 without BOM
-            with open(file_name, "w", encoding="utf-8") as out_file:
-                out_file.write(out_str)
+            out_codec = codecs.lookup("utf-8")
 
-        else:
-            # write windows CRLF and dedicated codec or UTF-8 with BOM
-            with open(file_name, "wb") as out_file:
-                out_file.write(out_codec.encode(out_str)[0])
+        # write windows CRLF and dedicated codec or UTF-8 with BOM
+        with open(out_name, "wb") as out_file:
+            out_file.write(out_codec.encode(out_str)[0])
 
     except (UnicodeDecodeError, UnicodeEncodeError, LookupError) as e:
         print("[fail] (codec error)")
@@ -218,13 +216,11 @@ def str_to_file(out_codec, out_name, out_str, is_lf=True):
     try:
         if is_lf:
             # write unix LF and UTF-8 without BOM
-            with open(out_name, "w", encoding="utf-8") as out_file:
-                out_file.write(out_str)
+            out_codec = codecs.lookup("utf-8")
 
-        else:
-            # write windows CRLF and dedicated codec or UTF-8 with BOM
-            with open(out_name, "wb") as out_file:
-                out_file.write(out_codec.encode(out_str)[0])
+        # write windows CRLF and dedicated codec or UTF-8 with BOM
+        with open(out_name, "wb") as out_file:
+            out_file.write(out_codec.encode(out_str)[0])
 
     except (UnicodeDecodeError, UnicodeEncodeError, LookupError) as e:
         print("[fail] (codec error)")

@@ -212,7 +212,10 @@ def main():
 
     i = 0
     if args.limited_output:
-        args.output = list(itertools.repeat(args.output[0], len(args.input_)))
+        if len(args.output) > 0:
+            args.output = list(itertools.repeat(args.output[0], len(args.input_)))
+        else:
+            print("At least one output must be specified. Limited-output option is invalid.\n")
     for input_file in args.input_:
         if os.path.isdir(input_file):
             # input direction(s)
@@ -221,7 +224,7 @@ def main():
                 print("""The number of output isn't enough.
 Using \"{inp}\" instead.\n""".format(inp=args.output[i]))
 
-            elif not os.path.isdir(args.output[i]):
+            elif (args.exp_smp or args.overwrite) and not os.path.isdir(args.output[i]):
                 args.output[i] = input_file + "\\new"
                 print("""Output direction doesn't exist.
 Using \"{inp}\" instead.\n""".format(inp=args.output[i]))
@@ -238,7 +241,7 @@ Using \"{inp}\" instead.\n""".format(inp=args.output[i]))
                                                      field_name=args.field_name,
                                                      name_tail=args.name_tails,
                                                      filter_tuple=args.filter_,
-                                                     export_method=(args.no_forced_encoding,
+                                                     export_method=(not args.no_forced_encoding,
                                                                     args.rename_number,
                                                                     args.text_excluded,
                                                                     args.keep_override_code)

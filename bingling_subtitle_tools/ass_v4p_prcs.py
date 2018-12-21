@@ -342,7 +342,7 @@ def simple_ass_export_txt(ass_file_line_list,
                                it will export text grouped by field content
         field_name          -- a field name to classify
                                Reference http://moodub.free.fr/video/ass-specs.doc
-        export_method       -- a tuple includes 4 Boolean Objects
+        export_method       -- a tuple includes 3 Boolean Objects
                                1st True for forcing utf-8 without BOM and unix LF file input
                                or it will use the same encoding
                                as the input file with the windows CRLF
@@ -608,7 +608,7 @@ def simple_ass_export_batch(import_dir,
     for elem_name in files_name_list:
         temp = []
         print("...... .ass file name: \"{file_n}\"".format(file_n=elem_name))
-        fail_c, codec, is_crlf = \
+        fail_c, codec, is_lf = \
             file_io.file_to_list(import_dir + "\\" + elem_name, temp, export_method[0])
         if fail_c != 0:
             break
@@ -616,7 +616,7 @@ def simple_ass_export_batch(import_dir,
             num_list = re.findall(r"\d+\.?\d*", elem_name)
             if num_list and len(num_list) > 0:
                 elem_name = "E" + str(num_list[0])
-        exp_m = [not is_crlf]
+        exp_m = [is_lf]
         exp_m.extend(export_method[2:4])
         result_list, fail_c = simple_ass_export_txt(ass_file_line_list=temp,
                                                     export_file_name=export_dir + "\\" + os.path.splitext(elem_name)[0],
@@ -716,14 +716,14 @@ def delete_ass_sect_batch(import_dir,
 
     for elem_name in files_name_list:
         temp = []
-        fail_c, codec, is_crlf = \
+        fail_c, codec, is_lf = \
             file_io.file_to_list(import_dir + "\\" + elem_name, temp, is_forced_lf)
         if fail_c != 0:
             break
         state_list = delete_ass_sect_list(temp, sect)
         name = os.path.splitext(elem_name)[0]
         fail_c = \
-            file_io.list_to_file(codec, export_dir + "\\" + name + name_tail + ".ass", temp, is_forced_lf)
+            file_io.list_to_file(codec, export_dir + "\\" + name + name_tail + ".ass", temp, is_lf)
         if fail_c != 0:
             break
         print("The result of deleting the section of an .ass file: \"{elem}\"".format(elem=name))

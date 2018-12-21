@@ -142,7 +142,9 @@ no_forced_encoding = False
 
 limited_output = False
 # Limit the files to one path
-# which is the first \"-o/--output\" argument
+# which is the first \"-o/--output\" argument.
+# At least one output path must be specified.
+# Or it will be overridden.
 # default = False
 # [arg_num = 0]
 
