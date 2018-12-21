@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   id="svg8"
+   version="1.1"
+   viewBox="0 0 67.733332 67.733335"
+   height="256"
+   width="256">
+  <defs
+     id="defs2">
+    <filter
+       height="1.0768"
+       y="-0.0384"
+       width="1.0768"
+       x="-0.0384"
+       id="filter4751"
+       style="color-interpolation-filters:sRGB;">
+      <feFlood
+         id="feFlood4741"
+         result="flood"
+         flood-color="rgb(0,0,0)"
+         flood-opacity="1" />
+      <feComposite
+         id="feComposite4743"
+         result="composite1"
+         operator="in"
+         in2="SourceGraphic"
+         in="flood" />
+      <feGaussianBlur
+         id="feGaussianBlur4745"
+         result="blur"
+         stdDeviation="0.99906665"
+         in="composite1" />
+      <feOffset
+         id="feOffset4747"
+         result="offset"
+         dy="0"
+         dx="-0" />
+      <feComposite
+         id="feComposite4749"
+         result="composite2"
+         operator="over"
+         in2="offset"
+         in="SourceGraphic" />
+    </filter>
+  </defs>
+  <metadata
+     id="metadata5">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     style="display:inline"
+     id="layer2">
+    <rect
+       transform="matrix(1.0073671,0,0,1.0076739,-7.8566359e-8,-0.51977879)"
+       style="display:inline;opacity:1;fill:#a6daff;fill-opacity:1;stroke-width:0.14717641;filter:url(#filter4751)"
+       y="2.8939085"
+       x="2.3977602"
+       height="62.441666"
+       width="62.441666"
+       id="rect3725-4" />
+  </g>
+  <g
+     style="display:inline"
+     id="layer3">
+    <path
+       id="rect3725"
+       d="M 5.084961,5.0849587 V 62.648371 H 62.648374 V 5.0849587 Z"
+       style="display:inline;opacity:1;fill:#002b36;fill-opacity:1;stroke-width:0.14717641" />
+  </g>
+  <g
+     style="display:inline"
+     transform="translate(0,-229.26665)"
+     id="layer1">
+    <text
+       transform="scale(0.97905862,1.0213893)"
+       id="text3723"
+       y="272.09793"
+       x="14.877477"
+       style="font-style:normal;font-weight:normal;font-size:16.13716698px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;display:inline;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.40342915"
+       xml:space="preserve"><tspan
+         style="font-style:normal;font-variant:normal;font-weight:900;font-stretch:normal;font-size:38.72920609px;font-family:'Source Han Serif SC';-inkscape-font-specification:'Source Han Serif SC Heavy';fill:#a6daff;fill-opacity:1;stroke-width:0.40342915"
+         y="272.09793"
+         x="14.877477"
+         id="tspan3721">冰</tspan></text>
+  </g>
+</svg>
