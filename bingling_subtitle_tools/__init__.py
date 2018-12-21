@@ -5,16 +5,19 @@
 
 
 # Import built-in modules
-import os
 import argparse
+import itertools
+import os
 
 
 # Import third-party modules
 
 
 # Any changes to the path and your own modules
-import ass_v4p_prcs
-import file_io
+from bingling_subtitle_tools import ass_v4p_prcs
+from bingling_subtitle_tools import file_io
+from bingling_subtitle_tools import version
+# nuitka build limitation
 
 
 class Bunch(object):
@@ -23,10 +26,7 @@ class Bunch(object):
 
 
 def get_cmd_args():
-    version = {}
-    with open("version.py") as fp:
-        exec(fp.read(), version)
-        __version__ = version["version"]
+    __version__ = version.__version__
 
     parser = argparse.ArgumentParser(description="""A tool that do batch processing jobs on ASS\
 (Advanced SubStation Alpha) files""",
@@ -104,14 +104,18 @@ Bug report: https://github.com/BingLingGroup/bingling-subtitle-tools""",
                         help="""-es: Enable changing the export name into
                         a kind of format like \"E\" + the number already in the file name.
                         [arg_num = 0]""")
+    parser.add_argument("-koc", "-es: --keep-override-code", action="store_true",
+                        help="""Keep the override codes (similar words are override tags
+                        by http://docs.aegisub.org/3.2/ASS_Tags/) instead of deleting them.  
+                        [arg_num = 0]""")
     parser.add_argument("-nfe", "--no-forced-encoding", action="store_true",
                         help="""Disable output file encoding into utf-8 without BOM
                         equal to utf-8 with unix LF and it will use the same encoding 
                         as the input file with the windows CRLF.
                         [arg_num = 0]""")
-    parser.add_argument("-koc", "--keep-override-code", action="store_true",
-                        help="""Keep the override codes (similar words are override tags
-                        by http://docs.aegisub.org/3.2/ASS_Tags/) instead of deleting them.  
+    parser.add_argument("-lo", "--limited-output", action="store_true",
+                        help="""Limit the files to one path 
+                        which is the first \"-o/--output\" argument
                         [arg_num = 0]""")
     parser.add_argument("-ds", "--del-sect", action="store_true",
                         help="Enable a function: do a batch job on deleting .ass section(s) in .ass file(s).\
@@ -135,7 +139,7 @@ Bug report: https://github.com/BingLingGroup/bingling-subtitle-tools""",
                         and the \"-nt/--name-tail\" option.
                         Not using this option will prevent any attempts to overwrite the files.
                         [arg_num = 0]""")
-    parser.add_argument("--version", action="version", version="{ver}".format(ver=__version__))
+    parser.add_argument("-v", "--version", action="version", version="{ver}".format(ver=__version__))
 
     return parser.parse_args(), __version__
 
@@ -159,10 +163,12 @@ def set_default_dict(arg_dict):
         arg_dict["text_excluded"] = False
     if "rename_number" not in arg_dict:
         arg_dict["rename_number"] = False
-    if "no_forced_encoding" not in arg_dict:
-        arg_dict["no_forced_encoding"] = False
     if "keep_override_code" not in arg_dict:
         arg_dict["keep_override_code"] = False
+    if "no_forced_encoding" not in arg_dict:
+        arg_dict["no_forced_encoding"] = False
+    if "limited_output" not in arg_dict:
+        arg_dict["limited_output"] = False
     if "del_sect" not in arg_dict:
         arg_dict["del_sect"] = False
     if "sect_name" not in arg_dict:
@@ -191,7 +197,7 @@ def main():
                 print("File's codec not supported.")
                 return
         else:
-            print("This config file format currently not supported.")
+            print("This format of config file currently not supported.")
             return
 
     if not args.del_sect and not args.exp_smp:
@@ -203,14 +209,14 @@ def main():
     if args.custom_msg == " ":
         # process the "default" custom_msg
         args.custom_msg = "# Exported by BingLingSubtitleTools {ver}".format(ver=__version__)
-    print(args)
 
     i = 0
-    output_len = len(args.output)
+    if args.limited_output:
+        args.output = list(itertools.repeat(args.output[0], len(args.input_)))
     for input_file in args.input_:
         if os.path.isdir(input_file):
             # input direction(s)
-            if i >= output_len:
+            if i >= len(args.output):
                 args.output.append(input_file + "\\new")
                 print("""The number of output isn't enough.
 Using \"{inp}\" instead.\n""".format(inp=args.output[i]))
@@ -265,10 +271,6 @@ Using \"{inp}\" instead.\n""".format(inp=args.output[i]))
             print("Input direction: \"{inp}\" does not exist.".format(inp=input_file))
 
         i += 1
-
-
-if __name__ == "__main__":
-    main()
 
 
 

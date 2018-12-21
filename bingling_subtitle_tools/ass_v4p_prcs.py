@@ -5,19 +5,15 @@
 
 
 # Import built-in modules
-import codecs
 import os
 import re
-import sys
 
 
 # Import third-party modules
-import chardet
-import click
 
 
 # Any changes to the path and your own modules
-import file_io
+from bingling_subtitle_tools import file_io
 
 
 class GetFieldContentFailedException(Exception):
@@ -31,7 +27,7 @@ class GetFieldContentFailedException(Exception):
 class SimpleAssEvent:
     """Simple class for ass event section
 
-        ref http://moodub.free.fr/video/ass-specs.doc
+        Reference http://moodub.free.fr/video/ass-specs.doc
         """
 
     simple_event_fields = ["Marked", "Start", "End", "Style", "Name",
@@ -128,7 +124,7 @@ class SimpleAssEvent:
 # class AssV4plusStyle:
 #     """Ass v4plus style section class
 #
-#         ref http://moodub.free.fr/video/ass-specs.doc
+#         Reference http://moodub.free.fr/video/ass-specs.doc
 #         """
 #
 #     def __init__(self,
@@ -345,7 +341,7 @@ def simple_ass_export_txt(ass_file_line_list,
         filter_tuple        -- a content tuple to filter, if it is None or a zero-length tuple
                                it will export text grouped by field content
         field_name          -- a field name to classify
-                               ref http://moodub.free.fr/video/ass-specs.doc
+                               Reference http://moodub.free.fr/video/ass-specs.doc
         export_method       -- a tuple includes 4 Boolean Objects
                                1st True for forcing utf-8 without BOM and unix LF file input
                                or it will use the same encoding
@@ -581,7 +577,7 @@ def simple_ass_export_batch(import_dir,
         custom_msg         -- a special message is written on the first line of the files
                                None for nothing to write
         field_name          -- a field name to classify
-                               ref http://moodub.free.fr/video/ass-specs.doc
+                               Reference http://moodub.free.fr/video/ass-specs.doc
         name_tail           -- new files name tail tuple, ("_CN", "_EN") by default
                                if name_tail is not empty and it has the same length as the filter_tuple
                                new files name will add one of these tails in order
@@ -666,7 +662,7 @@ def delete_ass_sect_list(ass_file_line_list,
         Params:
         ass_file_line_list       -- a target .ass file line list
         sect                     -- .ass sections name
-                                    ref http://moodub.free.fr/video/ass-specs.doc
+                                    Reference http://moodub.free.fr/video/ass-specs.doc
 
         Return:
         state_list               -- a list for deletion result in sect order
@@ -704,7 +700,7 @@ def delete_ass_sect_batch(import_dir,
         export_dir      -- .ass files export direction
         name_tail       -- new files name tail, "_new" by default
         sect            -- .ass sections name tuple, ("[Aegisub Project Garbage]", ) by default
-                           ref http://moodub.free.fr/video/ass-specs.doc
+                           Reference http://moodub.free.fr/video/ass-specs.doc
         is_forced_lf    -- force utf-8 without BOM and unix LF file input
                            True by default
 

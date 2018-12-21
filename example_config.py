@@ -17,6 +17,10 @@
 # Backslash is an escape sequence to specify the actual String.
 # Use an escape sequence for using a double quote itself
 # in a double quoted String and vice versa.
+# String can be prefixed with a letter "r" or "R"
+# to avoid using such an escape sequence.
+# Such a string is called raw strings and treat backslashes as literal characters.
+# Escape sequence like "\n" won't work as well.
 
 # String usage
 # Make sure the strings have delimiters.
@@ -34,6 +38,7 @@
 # windows absolute path
 # "X:\\xxx\\xxx\\" or "X:\\xxx\\xxx"
 # "X:/xxx/xxx/" or "X:/xxx/xxx"
+# r"X:\xxx\xxx\" or r"X:\xxx\xxx\"
 # windows relative path or unix path
 # "/xxx/xxx" or "\xxx\xxx"
 # bad e.g. with single backslash
@@ -121,6 +126,12 @@ rename_number = False
 # default = False
 # arg_num = 0
 
+keep_override_code = False
+# Keep the override codes (similar words are override tags
+# by http://docs.aegisub.org/3.2/ASS_Tags/) instead of deleting them.
+# default = False
+# [arg_num = 0]
+
 no_forced_encoding = False
 # Disable output file encoding into utf-8 without BOM
 # equal to utf-8 with unix LF and it will use the same encoding
@@ -129,9 +140,9 @@ no_forced_encoding = False
 # default = False
 # arg_num = 0
 
-keep_override_code = False
-# Keep the override codes (similar words are override tags
-# by http://docs.aegisub.org/3.2/ASS_Tags/) instead of deleting them.
+limited_output = False
+# Limit the files to one path
+# which is the first \"-o/--output\" argument
 # default = False
 # [arg_num = 0]
 
@@ -164,8 +175,8 @@ overwrite = False
 # arg_num = 0
 
 # the code below is a config without comments
-# input_ = ["D:\\example\\input", ]
-# output = ["D:\\example\\output", ]
+# input_ = [r"D:\example\input", ]
+# output = [r"D:\example\output", ]
 # exp_smp = True
 # field_name = "Style"
 # custom_msg = " "
@@ -173,8 +184,9 @@ overwrite = False
 # filter_ = ["中文字幕", "英文字幕", ]
 # text_excluded = False
 # rename_number = False
-# no_forced_encoding = False
 # keep_override_code = False
+# no_forced_encoding = False
+# limited_output = True
 # del_sect = False
 # sect_name = ["[Aegisub Project Garbage]", ]
 # name_tail = "_new"

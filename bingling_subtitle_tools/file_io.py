@@ -5,16 +5,13 @@
 
 
 # Import built-in modules
-import argparse
 import codecs
 import os
-import re
 import sys
 
 
 # Import third-party modules
 import chardet
-import click
 
 
 # Any changes to the path and your own modules
