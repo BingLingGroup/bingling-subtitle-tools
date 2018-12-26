@@ -53,7 +53,7 @@ def file_to_list(file_name, file_line_list, is_forced_lf=True):
     in_codec            -- the file input codec
     is_lf               -- True for a unix .ass file, False for a windows .ass file
 
-    Modified from https://github.com/sorz/asstosrt. See /asstosrt/MIT LICENSE
+    Modified from https://github.com/sorz/asstosrt. See /asstosrt/MIT_LICENSE
     """
 
     fail_c = 0
@@ -112,7 +112,7 @@ def list_to_file(out_codec, out_name, file_line_list, is_lf=True):
     Return:
     fail_c              -- the count for file writing failure
 
-    Modified from https://github.com/sorz/asstosrt. See /asstosrt/MIT LICENSE
+    Modified from https://github.com/sorz/asstosrt. See /asstosrt/MIT_LICENSE
     """
 
     fail_c = 0
@@ -167,7 +167,7 @@ def file_to_str(file_name):
     in_codec        -- the file input codec
     file_str        -- a result multi-line string
 
-    Modified from https://github.com/sorz/asstosrt. See /asstosrt/MIT LICENSE
+    Modified from https://github.com/sorz/asstosrt. See /asstosrt/MIT_LICENSE
     """
 
     fail_c = 0
@@ -208,7 +208,7 @@ def str_to_file(out_codec, out_name, out_str, is_lf=True):
     Return:
     fail_c          -- the count for file writing failure
 
-    Modified from https://github.com/sorz/asstosrt. See /asstosrt/MIT LICENSE
+    Modified from https://github.com/sorz/asstosrt. See /asstosrt/MIT_LICENSE
     """
 
     fail_c = 0
@@ -249,7 +249,7 @@ def detect_charset(file):
     Return:
     chardet_result["encoding"]  -- the name of the charset
 
-    Modified from https://github.com/sorz/asstosrt. See /asstosrt/MIT LICENSE
+    Modified from https://github.com/sorz/asstosrt. See /asstosrt/MIT_LICENSE
     """
 
     sample = file.read(4096)

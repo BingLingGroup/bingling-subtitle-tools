@@ -1,5 +1,9 @@
-# Example Package
+# BingLing_subtitle_tools
 
-This is a simple example package. You can use
-[Github-flavored Markdown](https://guides.github.com/features/mastering-markdown/)
-to write your content.
+<img src="docs/icon/bingling.svg" width="128px">
+
+Under construction. 
+
+## Translation
+
+See ![cn](https://raw.githubusercontent.com/gosquared/flags/master/flags/flags/shiny/24/China.png) **Chinese (Simplified)** version readme [here](docs/README_ZH.md)

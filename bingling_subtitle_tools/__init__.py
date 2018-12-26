@@ -47,7 +47,7 @@ Bug report: https://github.com/BingLingGroup/bingling-subtitle-tools""",
                         [arg_num = 1]""")
     parser.add_argument("-i", "--input", nargs="*",
                         default=[os.getcwd(), ], dest="input_",
-                        help="""Path(s) or file name(s) of the input .ass file(s).
+                        help="""Path(s) of the input .ass file(s).
                         [arg_num ≥ 0]
                         [default: Current directory]""")
     parser.add_argument("-o", "--output", nargs="*",
@@ -129,7 +129,6 @@ Bug report: https://github.com/BingLingGroup/bingling-subtitle-tools""",
                         default="_new",
                         const="", metavar="STRING",
                         help="""-ds: The output files' name tail.
-                        Not using this option for default.
                         Using the option without argument for no name tail output.
                         [arg_num = 0 or 1]
                         [default: %(default)s]""")
@@ -215,25 +214,26 @@ def main():
         if len(args.output) > 0:
             args.output = list(itertools.repeat(args.output[0], len(args.input_)))
         else:
-            print("At least one output must be specified. Limited-output option is invalid.\n")
+            print("At least one output must be specified. Limited-output option is invalid now.\n")
     for input_file in args.input_:
         if os.path.isdir(input_file):
             # input direction(s)
-            if i >= len(args.output):
-                args.output.append(input_file + "\\new")
-                print("""The number of output isn't enough.
-Using \"{inp}\" instead.\n""".format(inp=args.output[i]))
-
-            elif (args.exp_smp or args.overwrite) and not os.path.isdir(args.output[i]):
-                args.output[i] = input_file + "\\new"
-                print("""Output direction doesn't exist.
-Using \"{inp}\" instead.\n""".format(inp=args.output[i]))
-
-            if not args.overwrite and not os.path.exists(args.output[i]):
-                os.makedirs(args.output[i])
-
             if args.exp_smp:
                 # simple ass export batch
+                if i >= len(args.output):
+                    args.output.append(input_file + "\\new")
+                    print("""The number of output isn't enough.
+                Using \"{inp}\" instead.\n""".format(inp=args.output[i]))
+                    if not os.path.isdir(args.output[i]):
+                        os.makedirs(args.output[i])
+
+                elif not os.path.isdir(args.output[i]):
+                    args.output[i] = input_file + "\\new"
+                    print("""Output direction doesn't exist.
+                Using \"{inp}\" instead.\n""".format(inp=args.output[i]))
+                    if not os.path.isdir(args.output[i]):
+                        os.makedirs(args.output[i])
+
                 print("Simply exporting......")
                 ass_v4p_prcs.simple_ass_export_batch(import_dir=input_file,
                                                      export_dir=args.output[i],
@@ -250,6 +250,7 @@ Using \"{inp}\" instead.\n""".format(inp=args.output[i]))
                 print("\nSimply exporting .ass in \"{inp}\" are all done.\n".format(inp=input_file))
             if args.del_sect:
                 # delete ass section batch
+
                 print("Deleting .ass sections......")
                 if args.overwrite:
                     ass_v4p_prcs.delete_ass_sect_batch(import_dir=input_file,
@@ -257,6 +258,21 @@ Using \"{inp}\" instead.\n""".format(inp=args.output[i]))
                                                        name_tail="",
                                                        sect=args.sect_name,
                                                        is_forced_lf=not args.no_forced_encoding)
+
+                elif i >= len(args.output):
+                    args.output.append(input_file + "\\new")
+                    print("""The number of output isn't enough.
+                Using \"{inp}\" instead.\n""".format(inp=args.output[i]))
+                    if not os.path.isdir(args.output[i]):
+                        os.makedirs(args.output[i])
+
+                elif not os.path.isdir(args.output[i]):
+                    args.output[i] = input_file + "\\new"
+                    print("""Output direction doesn't exist.
+                Using \"{inp}\" instead.\n""".format(inp=args.output[i]))
+                    if not os.path.isdir(args.output[i]):
+                        os.makedirs(args.output[i])
+
                 elif args.output[i] != input_file or len(args.name_tail) > 0:
                     ass_v4p_prcs.delete_ass_sect_batch(import_dir=input_file,
                                                        export_dir=args.output[i],
@@ -268,10 +284,10 @@ Using \"{inp}\" instead.\n""".format(inp=args.output[i]))
                         ......Attempt to overwrite but failed.
                         ......Using \"-ow\" or \"--overwrite\" option to overwrite.\n""".format(elem=input_file))
 
-                print("\nDeleting .ass sections in \"{inp}\" are all done.\n".format(inp=input_file))
+                print("\nDeleting .ass section(s) in \"{inp}\" are all done.\n".format(inp=input_file))
 
         else:
-            print("Input direction: \"{inp}\" does not exist.".format(inp=input_file))
+            print("Input: \"{inp}\" does not exist.".format(inp=input_file))
 
         i += 1
 

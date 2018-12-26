@@ -545,15 +545,11 @@ def simple_ass_export_txt(ass_file_line_list,
                     i += 1
                 j += 2
 
-            fail_c = \
+            fail_c += \
                 file_io.str_to_file(out_codec, export_file_name + tail[k] + "_t" + ".txt", temp_2, export_method[0])
-            if fail_c != 0:
-                break
 
-        fail_c = \
+        fail_c += \
             file_io.str_to_file(out_codec, export_file_name + tail[k] + ".txt", temp, export_method[0])
-        if fail_c != 0:
-            break
         k += 1
 
     SimpleAssEvent.field_content_list.clear()
@@ -611,14 +607,14 @@ def simple_ass_export_batch(import_dir,
         fail_c, codec, is_lf = \
             file_io.file_to_list(import_dir + "\\" + elem_name, temp, export_method[0])
         if fail_c != 0:
-            break
+            continue
         if export_method[1]:
             num_list = re.findall(r"\d+\.?\d*", elem_name)
             if num_list and len(num_list) > 0:
                 elem_name = "E" + str(num_list[0])
         exp_m = [is_lf]
         exp_m.extend(export_method[2:4])
-        result_list, fail_c = simple_ass_export_txt(ass_file_line_list=temp,
+        result_list, fail_t = simple_ass_export_txt(ass_file_line_list=temp,
                                                     export_file_name=export_dir + "\\" + os.path.splitext(elem_name)[0],
                                                     custom_msg=custom_msg,
                                                     out_codec=codec,
@@ -629,7 +625,7 @@ def simple_ass_export_batch(import_dir,
                                                     )
         print("......  output file name: \"{file_n}\"".format(file_n=elem_name))
         print("......  event's field: \"{field_n}\"".format(field_n=field_name))
-        if len(result_list) == 1:
+        if len(result_list) == 1 and result_list[0] is int:
             if result_list[0] == -1:
                 print("......  Section \"[Event]\" missed")
             elif result_list[0] == -2:
@@ -650,7 +646,7 @@ def simple_ass_export_batch(import_dir,
         print()
         del temp
 
-    print("Result: \n......{scs_c} files exported successfully, {fai_c} files failed."
+    print("Result: \n......{scs_c} file(s) exported successfully, {fai_c} input file(s) failed."
           .format(scs_c=len(files_name_list) - fail_c, fai_c=fail_c))
     return fail_c
 
@@ -736,7 +732,7 @@ def delete_ass_sect_batch(import_dir,
             i += 1
         print()
         del temp
-    print("Result: \n......{scs_c} files read successfully, {fai_c} files failed."
+    print("Result: \n......{scs_c} file(s) read successfully, {fai_c} file(s) failed."
           .format(scs_c=len(files_name_list) - fail_c, fai_c=fail_c))
     return fail_c
 

@@ -18,7 +18,7 @@ DESCRIPTION = "A tool that do batch processing jobs on ASS(Advanced SubStation A
 URL = "https://github.com/BingLingGroup/bingling-subtitle-tools"
 EMAIL = "binglingfansub@gmail.com"
 AUTHOR = "BingLingFanSub"
-REQUIRES_PYTHON = ">=3.0.0"
+REQUIRES_PYTHON = ">=3.4.0"
 VERSION = None
 
 # What packages are required for this module to be executed?

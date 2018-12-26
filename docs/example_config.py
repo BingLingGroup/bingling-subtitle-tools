@@ -55,7 +55,7 @@
 # If you are not using the function, you can omit it and its sub options
 
 input_ = ["D:\\example\\input", ]
-# Path(s) or file name(s) of the input .ass file(s).
+# Path(s) of the input .ass file(s).
 # arg_type = Tuple
 # default = (current command line direction)
 # arg_num ≥ 0
