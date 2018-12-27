@@ -625,11 +625,11 @@ def simple_ass_export_batch(import_dir,
                                                     )
         print("......  output file name: \"{file_n}\"".format(file_n=elem_name))
         print("......  event's field: \"{field_n}\"".format(field_n=field_name))
-        if len(result_list) == 1 and result_list[0] is int:
+        if len(result_list) == 1 and type(result_list[0]) is int:
             if result_list[0] == -1:
                 print("......  Section \"[Event]\" missed")
             elif result_list[0] == -2:
-                print("...... No \"{field_n}\" contents matched the field name".format(field_n=field_name))
+                print("......  No \"{field_n}\" contents matched the field name".format(field_n=field_name))
         elif not filter_tuple or len(filter_tuple) == 0:
             print("......  The given \"Content Tuple\" is empty. Try to export all of the events.")
             for result in result_list:

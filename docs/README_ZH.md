@@ -1,6 +1,6 @@
 # 冰灵工具箱
 
-<img src="icon/bingling.svg" width="128px">
+<img src="icon/bingling.png" width="128px">
 
 冰灵工具箱能对[.ass](http://moodub.free.fr/video/ass-specs.doc)(Advanced SubStation Alpha)字幕文件进行批量处理。
 
@@ -13,7 +13,7 @@
 5. [功能](#功能)
 6. [命令行选项](#命令行选项)
 7. [配置文件](#配置文件)
-8. [构建(Build)](#构建(Build))
+8. [构建\(Build\)](#构建\(Build\))
 
 ## 用到的其他开源项目
 
@@ -81,7 +81,7 @@
 
 - 非全局的子选项只有在特定选项输入后才起作用，子选项标注在各自父选项的标题下面。
 
-- 确保有引号包围着含空格的输入参数
+- 确保有引号包围着含空格的输入参数。
 
 ### 命令行选项概览
 
@@ -138,22 +138,24 @@
                         [default: # Exported by BingLingSubtitleTools
                         (当前版本号)]
     -nts [STRING [STRING ...]], --name-tails [STRING [STRING ...]]
-                        多个输出文件名后缀。
+                        多个输出文件名后缀，在扩展名之前，不是修改扩展名。
+                        输出文件扩展名总为txt。
                         输入选项但不输入参数表示
                         按照前面所输入的字段名取出字段内容作为文件名后缀。
                         只有当文件名后缀的数量和filter选项的参数数量一致
                         才会起作用。
                         一个字段内容对应一个输出文件名后缀，
                         和filter选项的顺序一致。
-                        默认选项中的"..., ..."意思是默认有两个参数。
+                        默认参数中的"..., ..."意思是默认有两个参数。
                         类似的表示方法说明后面不再赘述。
                         [arg_num ≥ 0]  
                         [default: ["_CN", "_EN"]]
-    -ft [FIELD_CONTENT [FIELD_CONTENT ...]], --filter [FIELD_CONTENT [FIELD_CONTENT ...]]
+    -ft [FIELD_CONTENT [FIELD_CONTENT ...]], 
+    --filter [FIELD_CONTENT [FIELD_CONTENT ...]]
                         用于筛选字幕事件，也就是字幕行的字段内容。
                         输入选项但不输入参数表示禁用筛选功能，
                         此时所有字幕行都会根据前面指定的字段，
-                        按照不同的字段内容全部分类输出。
+                        全部按照不同的字段内容分类输出。
                         [arg_num≥ 0]
                         [default: ["中文字幕", "英文字幕"]]
     -te, --text-excluded  
@@ -163,6 +165,8 @@
     -rn, --rename-number  
                         允许将输出名称重命名为类似Exx的格式，
                         其中xx来自于文件名中已经有的数字。
+                        注意此修改只是将原来的文件名修改为Exx，
+                        前面选项中指定的文件名后缀依然会添加。
                         [arg_num = 0]
     -koc, -es: --keep-override-code
                         导出时保留.ass标签，而不是默认删除它们。
@@ -189,8 +193,7 @@
                         一个输出文件名后缀。
                         输入选项但不输入参数表示不使用文件名后缀。
                         [arg_num = 0 or 1]
-                        [default:
-                        _new]
+                        [default: _new]
     -ow, --overwrite    [警告] 允许覆盖输入文件。
                         使用这个选项会忽略"-o/--output"选项
                         提供的输出路径参数
@@ -202,7 +205,7 @@
 
 以上命令行选项也可以使用配置文件进行设置，详见[example_config.py](example_config.py)。
 
-## 构建(Build)
+## 构建\(Build\)
 
 构建之前确保自己电脑上已经有python环境和pip包管理器。
 
@@ -218,7 +221,7 @@
 
 然后参照Nuitka的[文档](http://nuitka.net/doc/user-manual.html)配置参数进行编译。
 
-windows编译可以使用[nuitka_build.bat](../build_cmds/nuitka_build.bat)，或者是会自动输出日志文件的批处理[nuitka_build_log.bat](../build_cmds/nuitka_build_log.bat)
+windows编译可以使用[nuitka_build.bat](../build_cmds/nuitka_build.bat)，或者是会自动输出日志文件的批处理[nuitka_build_log.bat](../build_cmds/nuitka_build_log.bat)。
 
 ### 使用Pyintaller打包
 
