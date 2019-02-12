@@ -109,7 +109,7 @@ setup(
 
     entry_points="""
         [console_scripts]
-        bingling_subtitle_tools = bingling_subtitle_tools:main
+        bingling-subtitle-tools = bingling_subtitle_tools:main
         """,
     install_requires=REQUIRED,
     extras_require=EXTRAS,

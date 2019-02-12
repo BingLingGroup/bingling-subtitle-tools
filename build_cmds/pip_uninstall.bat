@@ -1,3 +1,2 @@
-@ECHO ON
-pip uninstall bingling_subtitle_tools
-pause
+pip uninstall bingling-subtitle-tools
+call cmd

@@ -1,6 +1,6 @@
-@ECHO OFF
+@echo off
 set setup_dir="..\"
-@ECHO ON
+@echo on
 cd %setup_dir%
 pip install .
 pause

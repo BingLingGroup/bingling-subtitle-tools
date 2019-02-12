@@ -1,0 +1,19 @@
+[
+  { "name": "Type: Bug", "color": "#dc322f" },
+  { "name": "Type: Maintenance", "color": "#6c71c4" },
+  { "name": "Type: Enhancement", "color": "#268bd2" },
+  { "name": "Type: Question", "color": "#2aa198" },
+  { "name": "Type: Invalid", "color": "#93a1a1" },
+  { "name": "Type: help wanted", "color": "#fdf6e3" },
+  { "name": "Priority: Low", "color": "#fdf6e3" },
+  { "name": "Priority: Medium", "color": "#b58900" },
+  { "name": "Priority: High", "color": "#dc322f" },
+  { "name": "Priority: Critical", "color": "#d33682" },
+  { "name": "Status: Abandoned", "color": "#002b36" },
+  { "name": "Status: Accepted", "color": "#859900" },
+  { "name": "Status: Blocked", "color": "#dc322f" },
+  { "name": "Status: Completed", "color": "#fdf6e3" },
+  { "name": "Status: In Progress", "color": "#eee8d5" },
+  { "name": "Status: Review Needed", "color": "#b58900" },
+  { "name": "Status: Revision Needed", "color": "#dc322f" }
+]
