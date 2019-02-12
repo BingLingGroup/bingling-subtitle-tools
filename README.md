@@ -6,4 +6,4 @@ Under construction.
 
 ## Translation
 
-See ![cn](https://raw.githubusercontent.com/gosquared/flags/master/flags/flags/shiny/24/China.png) **Chinese (Simplified)** version readme [here](docs/README_ZH.md)
+[**Chinese (Simplified)**](docs/README_ZH.md)
