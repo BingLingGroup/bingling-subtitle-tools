@@ -258,6 +258,8 @@ windows编译可以使用[nuitka_build.bat](../build_cmds/nuitka_build.bat)，�
 
 在编译完成，确定相关文件生成，且7z.exe在系统环境变量或者在[该文件夹](../build_cmds/)中可以使用时，可以点击[create_release.bat](../build_cmds/create_release.bat)制作windows发布包。
 
+该发布包会产生在../.release文件夹中。
+
 ### 使用Pyintaller打包
 
 [Pyinstaller](https://www.pyinstaller.org/)是一个python的打包程序，可以将python依赖环境和python源代码打包成可执行文件，以便在没有python环境的电脑上运行。
