@@ -5,6 +5,7 @@ set output_name="bingling-subtitle-tools"
 set package_name="bingling_subtitle_tools"
 
 @echo on
+cd %~dp0
 call nuitka "../%package_name:~1,-1%" --standalone --output-dir %output_dir% --show-progress --show-scons  --windows-icon=%icon_dir%
 cd "%output_dir:~1,-1%%package_name:~1,-1%.dist/"
 ren "%package_name:~1,-1%.exe" "%output_name:~1,-1%.exe"
