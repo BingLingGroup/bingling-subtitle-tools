@@ -96,16 +96,25 @@ Bug report: https://github.com/BingLingGroup/bingling-subtitle-tools""",
                         help="""-et/-es: Field content(s) to filter the events.
                         Using the option without argument 
                         for filter disabled and all the events will export to files 
-                        separated by their field contents under the specific field name.
+                        separated by their field contents under the specific field name. 
                         [arg_num ≥ 0]
                         [default: %(default)s]""")
+    parser.add_argument("-cb", "--comb", action="store_true",
+                        help="""-et/-es: Enable the output file(s) 
+                        which combines all the events output
+                        in the order of the filter.
+                        [arg_num = 0]""")
+    parser.add_argument("-ocb", "--only-comb", action="store_true",
+                        help="""-et/-es: Disable output for separated event's output files.
+                        Only works when \"-cb/--comb\" is used.
+                        [arg_num = 0]""")
     parser.add_argument("-te", "--text-excluded", action="store_true",
                         help="""-et/-es: Enable output for text-excluded part,
                         which is separated into a file with a \"_t\" name tail.
                         [arg_num = 0]""")
     parser.add_argument("-ntx", "--no-text", action="store_true",
                         help="""-et/-es: Disable output for text part.
-                        Only works when -te is used.
+                        Only works when \"-te/--text-excluded\" is used.
                         [arg_num = 0]""")
     parser.add_argument("-rn", "--rename-number", action="store_true",
                         help="""-et/-es: Enable changing the export name into
@@ -167,6 +176,10 @@ def set_default_dict(arg_dict):
         arg_dict["name_tails"] = ["_CN", "_EN", ]
     if "filter_" not in arg_dict:
         arg_dict["filter_"] = ["中文字幕", "英文字幕", ]
+    if "comb" not in arg_dict:
+        arg_dict["comb"] = False
+    if "only_comb" not in arg_dict:
+        arg_dict["only_comb"] = False
     if "no_text" not in arg_dict:
         arg_dict["no_text"] = False
     if "text_excluded" not in arg_dict:
@@ -214,6 +227,11 @@ def main():
         print("""\"-ntx\" option only works when \"-te\" is used.
 \"-ntx\" option is invalid now.\n""")
         args.no_text = False
+
+    if args.only_comb and not args.comb:
+        print("""\"-ocb\" option only works when \"-cb\" is used.
+\"-ocb\" option is invalid now.\n""")
+        args.only_comb = False
 
     if not (args.del_sect or args.exp_txt or args.exp_ass):
         print("No works done! Check your options.")
@@ -267,7 +285,9 @@ Using \"{inp}\" instead.\n""".format(inp=args.output[i]))
                                                                     args.exp_ass,
                                                                     args.text_excluded,
                                                                     args.no_text,
-                                                                    args.keep_override_code)
+                                                                    args.keep_override_code,
+                                                                    args.comb,
+                                                                    args.only_comb)
                                                      )
 
                 print("\nSimply exporting .ass in \"{inp}\" are all done.\n".format(inp=input_file))

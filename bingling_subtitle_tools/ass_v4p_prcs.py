@@ -324,7 +324,8 @@ def simple_ass_export_txt(ass_file_line_list,
                           name_tail=("_CN", "_EN"),
                           filter_tuple=("中文字幕", "英文字幕"),
                           field_name="Style",
-                          export_method=(True, True, False, False, False, False)
+                          export_method=(True, True, False, False,
+                                         False, False, True, True)
                           ):
     """Get field content from the given field name
 
@@ -348,10 +349,13 @@ def simple_ass_export_txt(ass_file_line_list,
                                as the input file with the windows CRLF
                                2nd True for exporting into txt content
                                3rd True for exporting into .ass format
-                               4th True for export extra text-excluded content
+                               4th True for exporting extra text-excluded content
                                one .txt per one .ass field content
                                5th True for no text export
                                6th True for Keeping the override codes
+                               7th True for exporting extra file
+                               which combines the events all together
+                               8th True for no separated events output
 
         Return:
         result_list         -- a list for the ones in filter_tuple
@@ -505,6 +509,7 @@ def simple_ass_export_txt(ass_file_line_list,
     k = 0
     if not export_method[2] and not export_method[3]:
         # export only text content into txt
+        text_comb = ""
         for event in sorted_event_list:
             j = 0
             # j for event.event_row‘s row index
@@ -519,8 +524,8 @@ def simple_ass_export_txt(ass_file_line_list,
                         # don't keep override code
                         text += "".join(re.compile(r'{.*?}').split(line[event.text_list[i] + 1:]))
                     else:
-                        text += line[event.text_list[i] + 1:]
                         # get every event's text
+                        text += line[event.text_list[i] + 1:]
                     if export_method[0]:
                         # unix LF
                         text += "\n"
@@ -533,22 +538,32 @@ def simple_ass_export_txt(ass_file_line_list,
                 j += 2
                 # get next [start:stop] values of event part
 
+            if export_method[6]:
+                # need to combine
+                text_comb = text_comb + text
+
+            if not export_method[7]:
                 fail_c += \
                     file_io.str_to_file(out_codec, export_file_name + tail[k] + ".txt", custom_msg + text,
                                         export_method[0])
-                # export into txt
-
+            # export into txt
             k += 1
+
+        if export_method[6]:
+            # export combination the file
+            fail_c += \
+                file_io.str_to_file(out_codec, export_file_name + ".txt", custom_msg + text_comb,
+                                    export_method[0])
 
     elif export_method[4]:
         # export only text-excluded content
+        text_ex_comb = ""
         for event in sorted_event_list:
             j = 0
             # j for event.event_row‘s row index
             i = 0
             # i for event.text_list's column index
             tail.append("_" + event.field_content)
-
             text_excluded = ""
             while j < len(event.event_row) - 1:
                 for line in ass_file_line_list[event.event_row[j]:event.event_row[j + 1]]:
@@ -564,21 +579,43 @@ def simple_ass_export_txt(ass_file_line_list,
 
                 j += 2
 
+            if export_method[6]:
+                # need to combine
+                text_ex_comb = text_ex_comb + text_excluded
+
+            if not export_method[7]:
+                if export_method[1]:
+                    # export into txt
+                    fail_c += \
+                        file_io.str_to_file(out_codec, export_file_name + tail[k] + "_t.txt",
+                                            custom_msg + text_excluded,  export_method[0])
+
+                if export_method[2]:
+                    # export into .ass
+                    text_excluded = ass_sect_content + text_excluded
+                    fail_c += \
+                        file_io.str_to_file(out_codec, export_file_name + tail[k] + "_t.ass",
+                                            custom_msg + text_excluded, export_method[0])
+            k += 1
+
+        if export_method[6]:
+            # export combination the file
             if export_method[1]:
                 # export into txt
                 fail_c += \
-                    file_io.str_to_file(out_codec, export_file_name + tail[k] + "_t" + ".txt",
-                                        custom_msg + text_excluded,  export_method[0])
+                    file_io.str_to_file(out_codec, export_file_name + "_t.txt", custom_msg + text_ex_comb,
+                                        export_method[0])
             if export_method[2]:
                 # export into .ass
-                text_excluded = ass_sect_content + text_excluded
+                text_ex_comb = ass_sect_content + text_ex_comb
                 fail_c += \
-                    file_io.str_to_file(out_codec, export_file_name + tail[k] + "_t" + ".ass",
-                                        custom_msg + text_excluded, export_method[0])
-            k += 1
+                    file_io.str_to_file(out_codec, export_file_name + "_t.ass", custom_msg + text_ex_comb,
+                                        export_method[0])
 
     elif not export_method[2]:
         # export only into txt including text-excluded content
+        text_ex_comb = ""
+        text_comb = ""
         for event in sorted_event_list:
             j = 0
             # j for event.event_row‘s row index
@@ -608,16 +645,34 @@ def simple_ass_export_txt(ass_file_line_list,
 
                 j += 2
 
+            if export_method[6]:
+                # need to combine
+                text_comb = text_comb + text
+                text_ex_comb = text_ex_comb + text_excluded
+
+            if not export_method[7]:
                 fail_c += \
-                    file_io.str_to_file(out_codec, export_file_name + tail[k] + "_t" + ".txt",
-                                        custom_msg + text_excluded,  export_method[0])
+                    file_io.str_to_file(out_codec, export_file_name + tail[k] + "_t.txt",
+                                        custom_msg + text_excluded, export_method[0])
                 fail_c += \
                     file_io.str_to_file(out_codec, export_file_name + tail[k] + ".txt", custom_msg + text, export_method[0])
                 # export into txt
+
             k += 1
+
+        if export_method[6]:
+            # export combination the file
+            fail_c += \
+                file_io.str_to_file(out_codec, export_file_name + "_t.txt",
+                                    custom_msg + text_ex_comb, export_method[0])
+            fail_c += \
+                file_io.str_to_file(out_codec, export_file_name + ".txt",
+                                    custom_msg + text_comb, export_method[0])
 
     elif not export_method[3]:
         # export into txt and .ass without extra text-excluded content
+        text_comb = ""
+        event_ln_comb = ""
         for event in sorted_event_list:
             j = 0
             # j for event.event_row‘s row index
@@ -647,19 +702,41 @@ def simple_ass_export_txt(ass_file_line_list,
 
                 j += 2
 
+            if export_method[6]:
+                # need to combine
+                text_comb = text_comb + text
+                event_ln_comb = event_ln_comb + event_line
+
+            if not export_method[7]:
                 fail_c += \
-                    file_io.str_to_file(out_codec, export_file_name + tail[k] + ".txt", custom_msg + text, export_method[0])
+                    file_io.str_to_file(out_codec, export_file_name + tail[k] + ".txt",
+                                        custom_msg + text, export_method[0])
                 # export into txt
 
                 event_line = ass_sect_content + event_line
                 fail_c += \
                     file_io.str_to_file(out_codec, export_file_name + tail[k] + ".ass",
                                         event_line, export_method[0])
-                # export into .ass
+            # export into .ass
             k += 1
+
+        if export_method[6]:
+            # export combination the file
+            # export into txt
+            fail_c += \
+                file_io.str_to_file(out_codec, export_file_name + ".txt",
+                                    custom_msg + text_comb, export_method[0])
+            # export into .ass
+            event_ln_comb = ass_sect_content + event_ln_comb
+            fail_c += \
+                file_io.str_to_file(out_codec, export_file_name + ".ass",
+                                    event_ln_comb, export_method[0])
 
     else:
         # export into txt and .ass with extra text-excluded content
+        text_comb = ""
+        text_ex_comb = ""
+        event_ln_comb = ""
         for event in sorted_event_list:
             j = 0
             # j for event.event_row‘s row index
@@ -693,8 +770,15 @@ def simple_ass_export_txt(ass_file_line_list,
 
                 j += 2
 
+            if export_method[6]:
+                # need to combine
+                text_comb = text_comb + text
+                text_ex_comb = text_ex_comb + text_excluded
+                event_ln_comb = event_ln_comb + event_line
+
+            if not export_method[7]:
                 fail_c += \
-                    file_io.str_to_file(out_codec, export_file_name + tail[k] + "_t" + ".txt",
+                    file_io.str_to_file(out_codec, export_file_name + tail[k] + "_t.txt",
                                         custom_msg + text_excluded, export_method[0])
                 fail_c += \
                     file_io.str_to_file(out_codec, export_file_name + tail[k] + ".txt", custom_msg + text, export_method[0])
@@ -704,13 +788,32 @@ def simple_ass_export_txt(ass_file_line_list,
                 text_excluded = ass_sect_content + text_excluded
 
                 fail_c += \
-                    file_io.str_to_file(out_codec, export_file_name + tail[k] + "_t" + ".ass",
+                    file_io.str_to_file(out_codec, export_file_name + tail[k] + "_t.ass",
                                         text_excluded, export_method[0])
                 fail_c += \
                     file_io.str_to_file(out_codec, export_file_name + tail[k] + ".ass",
-                                        event_line, export_method[0])
-                # export into .ass
+                                    event_line, export_method[0])
+            # export into .ass
             k += 1
+
+        if export_method[6]:
+            # export combination the file
+            fail_c += \
+                file_io.str_to_file(out_codec, export_file_name + "_t.txt",
+                                    custom_msg + text_ex_comb, export_method[0])
+            fail_c += \
+                file_io.str_to_file(out_codec, export_file_name + ".txt",
+                                    custom_msg + text_comb, export_method[0])
+            # export into txt
+            event_ln_comb = ass_sect_content + event_ln_comb
+            text_ex_comb = ass_sect_content + text_ex_comb
+
+            fail_c += \
+                file_io.str_to_file(out_codec, export_file_name + "_t.ass",
+                                    text_ex_comb, export_method[0])
+            fail_c += \
+                file_io.str_to_file(out_codec, export_file_name + ".ass",
+                                    event_ln_comb, export_method[0])
 
     SimpleAssEvent.field_content_list.clear()
     SimpleAssEvent.field_name = None
@@ -723,7 +826,9 @@ def simple_ass_export_batch(import_dir,
                             field_name="Style",
                             name_tail=("_CN", "_EN"),
                             filter_tuple=("中文字幕", "英文字幕"),
-                            export_method=(True, True, False, False, True, False, False)
+                            export_method=(True, True, False, False,
+                                           True, False, False, True,
+                                           True)
                             ):
     """Do a batch job on exporting .ass files to txt files.
 
@@ -749,10 +854,13 @@ def simple_ass_export_batch(import_dir,
                                or add name_tail if filter_tuple is not empty
                                3rd True for exporting into txt content
                                4th True for exporting into .ass format
-                               5th True for export extra text-excluded content
+                               5th True for exporting extra text-excluded content
                                one .txt per one .ass field content
                                6th True for no text export
                                7th True for Keeping the override codes
+                               8th True for exporting extra file
+                               which combines the events all together
+                               9th True for no separated events output
         """
 
     fail_c = 0
@@ -775,7 +883,7 @@ def simple_ass_export_batch(import_dir,
             if num_list and len(num_list) > 0:
                 elem_name = "E" + str(num_list[0])
         exp_m = [is_lf]
-        exp_m.extend(export_method[2:7])
+        exp_m.extend(export_method[2:9])
         result_list, fail_t = simple_ass_export_txt(ass_file_line_list=temp,
                                                     export_file_name=export_dir + "\\" + os.path.splitext(elem_name)[0],
                                                     custom_msg=custom_msg,
