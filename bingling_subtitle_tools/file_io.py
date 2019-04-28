@@ -58,29 +58,22 @@ def file_to_list(file_name, file_line_list, is_forced_lf=True):
 
     fail_c = 0
     in_codec = codecs.lookup("utf-8")
-    crlf_is_detected = False
     is_lf = False
 
     try:
         with open(file_name, "rb") as in_file:
             in_codec = codecs.lookup(detect_charset(in_file))
-            file_decoded = in_codec.streamreader(in_file)
-            for line in file_decoded:
-                if line != "\r\n" and line != "\n":
-                    # not windows CRLF or unix LF
-                    line = line.strip()
-                elif is_forced_lf is True:
+            file_decoded = in_codec.streamreader(in_file).read()
+            if "\r\n" in file_decoded:
+                if is_forced_lf is False:
+                    file_line_list.extend(file_decoded.split("\r\n"))
+                    is_lf = False
+                else:
+                    file_line_list.extend(file_decoded.split("\r\n"))
                     is_lf = True
-                    if line == "\r\n":
-                        line = "\n"
-                elif is_forced_lf is False and crlf_is_detected is False:
-                    crlf_is_detected = True
-                    if line == "\r\n":
-                        is_lf = False
-                    else:
-                        is_lf = True
-
-                file_line_list.append(line)
+            else:
+                file_line_list.extend(file_decoded.split("\n"))
+                is_lf = True
 
     except (UnicodeDecodeError, UnicodeEncodeError, LookupError) as e:
         print("[fail] (codec error)")
@@ -120,16 +113,10 @@ def list_to_file(out_codec, out_name, file_line_list, is_lf=True):
 
     if is_lf:
         # unix LF
-        for elem in file_line_list:
-            out_str += elem
-            if elem != "\n":
-                out_str += "\n"
+        out_str = "\n".join(file_line_list)
     else:
         # windows CRLF
-        for elem in file_line_list:
-            out_str += elem
-            if elem != "\r\n":
-                out_str += "\r\n"
+        out_str = "\r\n".join(file_line_list)
 
     try:
         if is_lf:

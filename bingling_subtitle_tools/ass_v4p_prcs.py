@@ -324,7 +324,7 @@ def simple_ass_export_txt(ass_file_line_list,
                           name_tail=("_CN", "_EN"),
                           filter_tuple=("中文字幕", "英文字幕"),
                           field_name="Style",
-                          export_method=(True, False, False)
+                          export_method=(True, True, False, False, False, False)
                           ):
     """Get field content from the given field name
 
@@ -346,10 +346,12 @@ def simple_ass_export_txt(ass_file_line_list,
                                1st True for forcing utf-8 without BOM and unix LF file input
                                or it will use the same encoding
                                as the input file with the windows CRLF
-                               2nd True for text-excluded content export method activated
-                               otherwise it will only export text content
+                               2nd True for exporting into txt content
+                               3rd True for exporting into .ass format
+                               4th True for export extra text-excluded content
                                one .txt per one .ass field content
-                               3rd True for Keeping the override codes
+                               5th True for no text export
+                               6th True for Keeping the override codes
 
         Return:
         result_list         -- a list for the ones in filter_tuple
@@ -365,6 +367,8 @@ def simple_ass_export_txt(ass_file_line_list,
 
     simple_ass_event = None
 
+    ass_sect_content = None
+
     try:
         row_num = ass_file_line_list.index("[Events]")
     except ValueError:
@@ -372,8 +376,15 @@ def simple_ass_export_txt(ass_file_line_list,
         result_list = [-1, ]
         return result_list, fail_c
 
-    row_num += 1
+    row_num += 2
     j = 0
+
+    if export_method[2]:
+        # if exporting into .ass, get the head
+        if export_method[0]:
+            ass_sect_content = "\n".join(ass_file_line_list[0:row_num]) + "\n"
+        else:
+            ass_sect_content = "\r\n".join(ass_file_line_list[0:row_num]) + "\r\n"
 
     while row_num < len(ass_file_line_list):
         if ass_file_line_list[row_num].startswith("Dialogue"):
@@ -498,58 +509,178 @@ def simple_ass_export_txt(ass_file_line_list,
         i = 0
         # i for event.text_list's column index
         tail.append("_" + event.field_content)
-        if custom_msg and len(custom_msg) > 0:
-            temp = custom_msg[:] + "\n"
-            temp_2 = custom_msg[:] + "\n"
-        else:
-            temp = ""
-            temp_2 = ""
 
-        if not export_method[1]:
+        if not export_method[2] and not export_method[3]:
+            # export only text content into txt
+            text = ""
             while j < len(event.event_row) - 1:
                 for line in ass_file_line_list[event.event_row[j]:event.event_row[j + 1]]:
                     # traverse every part of the event
-                    if not export_method[2]:
-                        temp += "".join(re.compile(r'{.*?}').split(line[event.text_list[i] + 1:]))
+                    if not export_method[5]:
+                        # don't keep override code
+                        text += "".join(re.compile(r'{.*?}').split(line[event.text_list[i] + 1:]))
                     else:
-                        temp += line[event.text_list[i] + 1:]
+                        text += line[event.text_list[i] + 1:]
                         # get every event's text
                     if export_method[0]:
                         # unix LF
-                        temp += "\n"
+                        text += "\n"
                     else:
                         # windows CRLF
-                        temp += "\r\n"
+                        text += "\r\n"
                     i += 1
                     # get next text column value
+
                 j += 2
                 # get next [start:stop] values of event part
 
-        else:
+                fail_c += \
+                    file_io.str_to_file(out_codec, export_file_name + tail[k] + ".txt", custom_msg + text, export_method[0])
+                # export into txt
+
+        elif export_method[4]:
+            # export only text-excluded content
+            text_excluded = ""
             while j < len(event.event_row) - 1:
                 for line in ass_file_line_list[event.event_row[j]:event.event_row[j + 1]]:
                     # get the content which excludes the text
-                    if not export_method[2]:
-                        temp += "".join(re.compile(r'{.*?}').split(line[event.text_list[i] + 1:]))
-                    else:
-                        temp += line[event.text_list[i] + 1:]
-                    temp_2 += line[:event.text_list[i] + 1]
+                    text_excluded += line[:event.text_list[i] + 1]
                     if export_method[0]:
                         # unix LF
-                        temp += "\n"
-                        temp_2 += "\n"
+                        text_excluded += "\n"
                     else:
                         # windows CRLF
-                        temp += "\r\n"
-                        temp_2 += "\r\n"
+                        text_excluded += "\r\n"
                     i += 1
+
                 j += 2
 
-            fail_c += \
-                file_io.str_to_file(out_codec, export_file_name + tail[k] + "_t" + ".txt", temp_2, export_method[0])
+            if export_method[1]:
+                # export into txt
+                fail_c += \
+                    file_io.str_to_file(out_codec, export_file_name + tail[k] + "_t" + ".txt",
+                                        custom_msg + text_excluded,  export_method[0])
+            if export_method[2]:
+                # export into .ass
+                text_excluded = ass_sect_content + text_excluded
+                fail_c += \
+                    file_io.str_to_file(out_codec, export_file_name + tail[k] + "_t" + ".ass",
+                                        custom_msg + text_excluded, export_method[0])
 
-        fail_c += \
-            file_io.str_to_file(out_codec, export_file_name + tail[k] + ".txt", temp, export_method[0])
+        elif not export_method[2]:
+            # export only into txt including text-excluded content
+            text = ""
+            text_excluded = ""
+            while j < len(event.event_row) - 1:
+                for line in ass_file_line_list[event.event_row[j]:event.event_row[j + 1]]:
+                    # get the content which excludes the text
+                    if not export_method[5]:
+                        # don't keep override code
+                        text += "".join(re.compile(r'{.*?}').split(line[event.text_list[i] + 1:]))
+                    else:
+                        text += line[event.text_list[i] + 1:]
+                    text_excluded += line[:event.text_list[i] + 1]
+                    if export_method[0]:
+                        # unix LF
+                        text += "\n"
+                        text_excluded += "\n"
+                    else:
+                        # windows CRLF
+                        text += "\r\n"
+                        text_excluded += "\r\n"
+                    i += 1
+
+                j += 2
+
+                fail_c += \
+                    file_io.str_to_file(out_codec, export_file_name + tail[k] + "_t" + ".txt",
+                                        custom_msg + text_excluded,  export_method[0])
+                fail_c += \
+                    file_io.str_to_file(out_codec, export_file_name + tail[k] + ".txt", custom_msg + text, export_method[0])
+                # export into txt
+
+        elif not export_method[3]:
+            # export into txt and .ass without extra text-excluded content
+            text = ""
+            event_line = ""
+            while j < len(event.event_row) - 1:
+                for line in ass_file_line_list[event.event_row[j]:event.event_row[j + 1]]:
+                    # get the content which excludes the text
+                    if not export_method[5]:
+                        # don't keep override code
+                        text += "".join(re.compile(r'{.*?}').split(line[event.text_list[i] + 1:]))
+                    else:
+                        text += line[event.text_list[i] + 1:]
+                    event_line += line
+                    if export_method[0]:
+                        # unix LF
+                        text += "\n"
+                        event_line += "\n"
+                    else:
+                        # windows CRLF
+                        text += "\r\n"
+                        event_line += "\r\n"
+                    i += 1
+
+                j += 2
+
+                fail_c += \
+                    file_io.str_to_file(out_codec, export_file_name + tail[k] + ".txt", custom_msg + text, export_method[0])
+                # export into txt
+
+                event_line = ass_sect_content + event_line
+                fail_c += \
+                    file_io.str_to_file(out_codec, export_file_name + tail[k] + ".ass",
+                                        event_line, export_method[0])
+                # export into .ass
+
+        else:
+            # export into txt and .ass with extra text-excluded content
+            text = ""
+            text_excluded = ""
+            event_line = ""
+            while j < len(event.event_row) - 1:
+                for line in ass_file_line_list[event.event_row[j]:event.event_row[j + 1]]:
+                    # get the content which excludes the text
+                    if not export_method[5]:
+                        # don't keep override code
+                        text += "".join(re.compile(r'{.*?}').split(line[event.text_list[i] + 1:]))
+                    else:
+                        text += line[event.text_list[i] + 1:]
+                    text_excluded += line[:event.text_list[i] + 1]
+                    event_line += line
+                    if export_method[0]:
+                        # unix LF
+                        text += "\n"
+                        text_excluded += "\n"
+                        event_line += "\n"
+                    else:
+                        # windows CRLF
+                        text += "\r\n"
+                        text_excluded += "\r\n"
+                        event_line += "\r\n"
+                    i += 1
+
+                j += 2
+
+                fail_c += \
+                    file_io.str_to_file(out_codec, export_file_name + tail[k] + "_t" + ".txt",
+                                        custom_msg + text_excluded, export_method[0])
+                fail_c += \
+                    file_io.str_to_file(out_codec, export_file_name + tail[k] + ".txt", custom_msg + text, export_method[0])
+                # export into txt
+
+                event_line = ass_sect_content + event_line
+                text_excluded = ass_sect_content + text_excluded
+
+                fail_c += \
+                    file_io.str_to_file(out_codec, export_file_name + tail[k] + "_t" + ".ass",
+                                        text_excluded, export_method[0])
+                fail_c += \
+                    file_io.str_to_file(out_codec, export_file_name + tail[k] + ".ass",
+                                        event_line, export_method[0])
+                # export into .ass
+
         k += 1
 
     SimpleAssEvent.field_content_list.clear()
@@ -563,7 +694,7 @@ def simple_ass_export_batch(import_dir,
                             field_name="Style",
                             name_tail=("_CN", "_EN"),
                             filter_tuple=("中文字幕", "英文字幕"),
-                            export_method=(False, False, True, False)
+                            export_method=(True, True, False, False, True, False, False)
                             ):
     """Do a batch job on exporting .ass files to txt files.
 
@@ -579,18 +710,20 @@ def simple_ass_export_batch(import_dir,
                                new files name will add one of these tails in order
         filter_tuple        -- a content tuple to match, if it is None or a zero-length tuple
                                it will export text grouped by field content
-        export_method       -- a tuple includes 4 Boolean Objects
-                               1st True for forcing utf-8 without BOM and unix LF file input
+        export_method       -- a tuple includes 6 Boolean Objects
+                               1st True for forcing utf-8 without BOM and unix LF file output
                                or it will use the same encoding
                                as the input file with the windows CRLF
                                2nd True for changing export name into
                                "E" + the number already in the file name
                                otherwise export name will stay the same
                                or add name_tail if filter_tuple is not empty
-                               3rd True for text-excluded content export method activated
-                               otherwise it will only export text content
+                               3rd True for exporting into txt content
+                               4th True for exporting into .ass format
+                               5th True for export extra text-excluded content
                                one .txt per one .ass field content
-                               4th True for Keeping the override codes
+                               6th True for no text export
+                               7th True for Keeping the override codes
         """
 
     fail_c = 0
@@ -613,7 +746,7 @@ def simple_ass_export_batch(import_dir,
             if num_list and len(num_list) > 0:
                 elem_name = "E" + str(num_list[0])
         exp_m = [is_lf]
-        exp_m.extend(export_method[2:4])
+        exp_m.extend(export_method[2:7])
         result_list, fail_t = simple_ass_export_txt(ass_file_line_list=temp,
                                                     export_file_name=export_dir + "\\" + os.path.splitext(elem_name)[0],
                                                     custom_msg=custom_msg,
@@ -673,13 +806,12 @@ def delete_ass_sect_list(ass_file_line_list,
             state_list.append(1)
             continue
         state_list.append(0)
-        while i < len(ass_file_line_list):
-            if ass_file_line_list[i] != "\r\n" and ass_file_line_list[i] != "\n":
-                # not windows CRLF or unix LF
-                del ass_file_line_list[i]
-            else:
-                del ass_file_line_list[i]
-                break
+        try:
+            sect_end = ass_file_line_list.index("", i)
+        except ValueError:
+            del ass_file_line_list[i:]
+            break
+        del ass_file_line_list[i:sect_end + 1]
 
     return state_list
 
