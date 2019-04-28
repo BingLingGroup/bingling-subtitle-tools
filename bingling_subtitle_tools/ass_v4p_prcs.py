@@ -491,7 +491,6 @@ def simple_ass_export_txt(ass_file_line_list,
     else:
         tail = []
 
-    k = 0
     if filter_tuple and len(filter_tuple) > 0:
         event_zip = zip(SimpleAssEvent.field_content_list, simple_ass_event_list)
         # keep the same order as content tuple
@@ -503,15 +502,15 @@ def simple_ass_export_txt(ass_file_line_list,
         sorted_event_list = simple_ass_event_list
         result_list = SimpleAssEvent.field_content_list
 
-    for event in sorted_event_list:
-        j = 0
-        # j for event.event_row‘s row index
-        i = 0
-        # i for event.text_list's column index
-        tail.append("_" + event.field_content)
-
-        if not export_method[2] and not export_method[3]:
-            # export only text content into txt
+    k = 0
+    if not export_method[2] and not export_method[3]:
+        # export only text content into txt
+        for event in sorted_event_list:
+            j = 0
+            # j for event.event_row‘s row index
+            i = 0
+            # i for event.text_list's column index
+            tail.append("_" + event.field_content)
             text = ""
             while j < len(event.event_row) - 1:
                 for line in ass_file_line_list[event.event_row[j]:event.event_row[j + 1]]:
@@ -535,11 +534,21 @@ def simple_ass_export_txt(ass_file_line_list,
                 # get next [start:stop] values of event part
 
                 fail_c += \
-                    file_io.str_to_file(out_codec, export_file_name + tail[k] + ".txt", custom_msg + text, export_method[0])
+                    file_io.str_to_file(out_codec, export_file_name + tail[k] + ".txt", custom_msg + text,
+                                        export_method[0])
                 # export into txt
 
-        elif export_method[4]:
-            # export only text-excluded content
+            k += 1
+
+    elif export_method[4]:
+        # export only text-excluded content
+        for event in sorted_event_list:
+            j = 0
+            # j for event.event_row‘s row index
+            i = 0
+            # i for event.text_list's column index
+            tail.append("_" + event.field_content)
+
             text_excluded = ""
             while j < len(event.event_row) - 1:
                 for line in ass_file_line_list[event.event_row[j]:event.event_row[j + 1]]:
@@ -566,9 +575,16 @@ def simple_ass_export_txt(ass_file_line_list,
                 fail_c += \
                     file_io.str_to_file(out_codec, export_file_name + tail[k] + "_t" + ".ass",
                                         custom_msg + text_excluded, export_method[0])
+            k += 1
 
-        elif not export_method[2]:
-            # export only into txt including text-excluded content
+    elif not export_method[2]:
+        # export only into txt including text-excluded content
+        for event in sorted_event_list:
+            j = 0
+            # j for event.event_row‘s row index
+            i = 0
+            # i for event.text_list's column index
+            tail.append("_" + event.field_content)
             text = ""
             text_excluded = ""
             while j < len(event.event_row) - 1:
@@ -598,9 +614,16 @@ def simple_ass_export_txt(ass_file_line_list,
                 fail_c += \
                     file_io.str_to_file(out_codec, export_file_name + tail[k] + ".txt", custom_msg + text, export_method[0])
                 # export into txt
+            k += 1
 
-        elif not export_method[3]:
-            # export into txt and .ass without extra text-excluded content
+    elif not export_method[3]:
+        # export into txt and .ass without extra text-excluded content
+        for event in sorted_event_list:
+            j = 0
+            # j for event.event_row‘s row index
+            i = 0
+            # i for event.text_list's column index
+            tail.append("_" + event.field_content)
             text = ""
             event_line = ""
             while j < len(event.event_row) - 1:
@@ -633,9 +656,16 @@ def simple_ass_export_txt(ass_file_line_list,
                     file_io.str_to_file(out_codec, export_file_name + tail[k] + ".ass",
                                         event_line, export_method[0])
                 # export into .ass
+            k += 1
 
-        else:
-            # export into txt and .ass with extra text-excluded content
+    else:
+        # export into txt and .ass with extra text-excluded content
+        for event in sorted_event_list:
+            j = 0
+            # j for event.event_row‘s row index
+            i = 0
+            # i for event.text_list's column index
+            tail.append("_" + event.field_content)
             text = ""
             text_excluded = ""
             event_line = ""
@@ -680,8 +710,7 @@ def simple_ass_export_txt(ass_file_line_list,
                     file_io.str_to_file(out_codec, export_file_name + tail[k] + ".ass",
                                         event_line, export_method[0])
                 # export into .ass
-
-        k += 1
+            k += 1
 
     SimpleAssEvent.field_content_list.clear()
     SimpleAssEvent.field_name = None
