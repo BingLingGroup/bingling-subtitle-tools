@@ -39,21 +39,21 @@ Author: BingLingFanSub
 Bug report: https://github.com/BingLingGroup/bingling-subtitle-tools""",
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
 
-    parser.add_argument("-c", "--config", nargs="?", default="", const=" ",
+    parser.add_argument("-c", "--config", nargs="?", const=" ",
                         help="""A config file stores the command line options and arguments.
                         Currently only support .py format.
                         If using, other options will be overridden.
                         If not using, it won't work.
                         Using the option without argument for default value.
                         [arg_num = 0 or 1]
-                        [default: config.py in the Current directory]""")
+                        [default: "config.py" in the current directory]""")
     parser.add_argument("-i", "--input", nargs="*",
-                        default=[os.getcwd(), ], dest="input_",
+                        default=[os.getcwd().replace("\\", "/"), ], dest="input_",
                         help="""Path(s) of the input .ass file(s).
                         [arg_num ≥ 0]
                         [default: Current directory]""")
     parser.add_argument("-o", "--output", nargs="*",
-                        default=[os.getcwd() + "\\new", ],
+                        default=[os.getcwd().replace("\\", "/") + "/new", ],
                         help="""Name(s) of the output directory.
                         Only works when direction(s) exist(s)
                         and it has the same number of the input.
@@ -67,11 +67,18 @@ Bug report: https://github.com/BingLingGroup/bingling-subtitle-tools""",
     parser.add_argument("-ea", "--exp-ass", action="store_true",
                         help="Enable a function: do a batch job on exporting .ass file(s) to .ass file(s).\
                         [arg_num = 0]")
+    parser.add_argument("-at", "--ass-temp", nargs="?", const=" ",
+                        help="""-ea: Another .ass file provide a template head to
+                        replace the input .ass file(s) content except the events.
+                        If not using, it won't work.
+                        Using the option without argument for default value.
+                        Only works when \"-ea/--exp-ass\" was used.
+                        [arg_num = 0 or 1]
+                        [default: "template.ass" in the current directory]""")
     parser.add_argument("-fn", "--field-name", nargs="?",
                         default="Style", const="Style", metavar="FIELD_NAME",
                         help="""-et/-ea: A Field name to separate .ass files into txt files.
                         Using the option without argument for default value.
-                        Only works when -et/-ea is used.
                         [arg_num = 0 or 1]
                         [default: %(default)s]""")
     parser.add_argument("-msg", "--custom-msg", nargs="?",
@@ -179,13 +186,15 @@ Bug report: https://github.com/BingLingGroup/bingling-subtitle-tools""",
 
 def set_default_dict(arg_dict):
     if "input_" not in arg_dict:
-        arg_dict["input_"] = [os.getcwd(), ]
+        arg_dict["input_"] = [os.getcwd().replace("\\", "/"), ]
     if "output" not in arg_dict:
         arg_dict["output"] = []
     if "exp_txt" not in arg_dict:
         arg_dict["exp_txt"] = False
     if "exp_ass" not in arg_dict:
         arg_dict["exp_ass"] = False
+    if "ass_temp" not in arg_dict:
+        arg_dict["ass_temp"] = None
     if "field_name" not in arg_dict:
         arg_dict["field_name"] = "Style"
     if "custom_msg" not in arg_dict:
@@ -229,7 +238,7 @@ def main():
     arg_dict = {}
     if args.config and len(args.config) > 0:
         if args.config == " ":
-            args.config = os.getcwd() + "/config.py"
+            args.config = os.getcwd().replace("\\", "/") + "/config.py"
         if args.config.endswith(".py"):
             fail_c, in_codec, arg_str = file_io.file_to_str(args.config)
             if fail_c == 0:
@@ -244,6 +253,11 @@ def main():
         else:
             print("This format of config file is currently not supported.")
             return
+
+    if args.ass_temp and not args.exp_ass:
+        print("""\"-at/--ass-temp\" option only works when \"-ea/--exp-ass\" is used.
+\"-at/--ass-temp\" option is invalid now.\n""")
+        args.no_text = None
 
     if args.no_text and not args.text_excluded:
         print("""\"-ntx/--no-text\" option only works when \"-te/--text-excluded\" is used.
@@ -260,7 +274,7 @@ def main():
         return
 
     if len(args.input_) == 0:
-        args.input_.append(os.getcwd())
+        args.input_.append(os.getcwd().replace("\\", "/"))
 
     if args.custom_msg == " ":
         # process the "default" custom_msg
@@ -276,20 +290,22 @@ def main():
         else:
             print("""At least one output must be specified. 
 \"-lo/--limited-output\" option is invalid now.\n""")
+
     for input_file in args.input_:
         if os.path.isdir(input_file):
+            input_file = input_file.replace("\\", "/")
             # input direction(s)
             if args.exp_txt or args.exp_ass:
                 # simple ass export batch
                 if i >= len(args.output):
-                    args.output.append(input_file + "\\new")
+                    args.output.append(input_file + "/new")
                     print("""The number of output isn't enough.
 Using \"{inp}\" instead.\n""".format(inp=args.output[i]))
                     if not os.path.isdir(args.output[i]):
                         os.makedirs(args.output[i])
 
                 elif not os.path.isdir(args.output[i]):
-                    args.output[i] = input_file + "\\new"
+                    args.output[i] = input_file + "/new"
                     print("""Output direction doesn't exist.
 Using \"{inp}\" instead.\n""".format(inp=args.output[i]))
                     if not os.path.isdir(args.output[i]):
@@ -298,6 +314,7 @@ Using \"{inp}\" instead.\n""".format(inp=args.output[i]))
                 print("Simply exporting......")
                 ass_v4p_prcs.simple_ass_export_batch(import_dir=input_file,
                                                      export_dir=args.output[i],
+                                                     ass_temp=args.ass_temp,
                                                      custom_msg=args.custom_msg,
                                                      field_name=args.field_name,
                                                      name_tail=args.name_tails,
@@ -328,14 +345,14 @@ Using \"{inp}\" instead.\n""".format(inp=args.output[i]))
 
                 else:
                     if i >= len(args.output):
-                        args.output.append(input_file + "\\new")
+                        args.output.append(input_file + "/new")
                         print("""The number of output isn't enough.
 Using \"{inp}\" instead.\n""".format(inp=args.output[i]))
                         if not os.path.isdir(args.output[i]):
                             os.makedirs(args.output[i])
 
                     elif not os.path.isdir(args.output[i]):
-                        args.output[i] = input_file + "\\new"
+                        args.output[i] = input_file + "/new"
                         print("""Output direction doesn't exist.
 Using \"{inp}\" instead.\n""".format(inp=args.output[i]))
                         if not os.path.isdir(args.output[i]):

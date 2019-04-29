@@ -328,17 +328,18 @@ def get_field_content_and_text(line,
     return field_content_begin, field_content_end, text_begin
 
 
-def simple_ass_export_txt(ass_file_line_list,
-                          export_file_name,
-                          custom_msg,
-                          out_codec,
-                          name_tail=("_CN", "_EN"),
-                          filter_=("中文字幕", "英文字幕"),
-                          mod_filter=(),
-                          field_name="Style",
-                          export_method=(True, True, False, False,
-                                         False, False, True, True)
-                          ):
+def simple_ass_export(ass_file_line_list,
+                      export_file_name,
+                      custom_msg,
+                      out_codec,
+                      ass_temp_str=None,
+                      name_tail=("_CN", "_EN"),
+                      filter_=("中文字幕", "英文字幕"),
+                      mod_filter=None,
+                      field_name="Style",
+                      export_method=(True, True, False, False,
+                                     False, False, True, True)
+                      ):
     """Get field content from the given field name
 
         Params:
@@ -385,7 +386,7 @@ def simple_ass_export_txt(ass_file_line_list,
 
     simple_ass_event = None
 
-    ass_sect_content = None
+    ass_head_str = None
 
     try:
         row_num = ass_file_line_list.index("[Events]")
@@ -402,10 +403,14 @@ def simple_ass_export_txt(ass_file_line_list,
 
     if export_method[2]:
         # if exporting into .ass, get the head
-        if export_method[0]:
-            ass_sect_content = "\n".join(ass_file_line_list[0:row_num]) + "\n"
+        if ass_temp_str:
+            ass_head_str = ass_temp_str
+
         else:
-            ass_sect_content = "\r\n".join(ass_file_line_list[0:row_num]) + "\r\n"
+            if export_method[0]:
+                ass_head_str = "\n".join(ass_file_line_list[0:row_num]) + "\n"
+            else:
+                ass_head_str = "\r\n".join(ass_file_line_list[0:row_num]) + "\r\n"
 
     while row_num < len(ass_file_line_list):
         if ass_file_line_list[row_num].startswith("Dialogue"):
@@ -628,7 +633,7 @@ def simple_ass_export_txt(ass_file_line_list,
 
                 if export_method[2]:
                     # export into .ass
-                    text_excluded = ass_sect_content + text_excluded
+                    text_excluded = ass_head_str + text_excluded
                     fail_c += \
                         file_io.str_to_file(out_codec, export_file_name + tail[k] + te_tail + ".ass",
                                             custom_msg + text_excluded, export_method[0])
@@ -643,7 +648,7 @@ def simple_ass_export_txt(ass_file_line_list,
                                         export_method[0])
             if export_method[2]:
                 # export combination into .ass
-                text_ex_comb = ass_sect_content + text_ex_comb
+                text_ex_comb = ass_head_str + text_ex_comb
                 fail_c += \
                     file_io.str_to_file(out_codec, export_file_name + te_tail + ".ass", custom_msg + text_ex_comb,
                                         export_method[0])
@@ -765,7 +770,7 @@ def simple_ass_export_txt(ass_file_line_list,
                                         custom_msg + text, export_method[0])
                 # export into txt
 
-                event_line = ass_sect_content + event_line
+                event_line = ass_head_str + event_line
                 fail_c += \
                     file_io.str_to_file(out_codec, export_file_name + tail[k] + ".ass",
                                         event_line, export_method[0])
@@ -779,7 +784,7 @@ def simple_ass_export_txt(ass_file_line_list,
                 file_io.str_to_file(out_codec, export_file_name + ".txt",
                                     custom_msg + text_comb, export_method[0])
             # export combination into .ass
-            event_ln_comb = ass_sect_content + event_ln_comb
+            event_ln_comb = ass_head_str + event_ln_comb
             fail_c += \
                 file_io.str_to_file(out_codec, export_file_name + ".ass",
                                     event_ln_comb, export_method[0])
@@ -847,8 +852,8 @@ def simple_ass_export_txt(ass_file_line_list,
                     file_io.str_to_file(out_codec, export_file_name + tail[k] + ".txt", custom_msg + text, export_method[0])
                 # export into txt
 
-                event_line = ass_sect_content + event_line
-                text_excluded = ass_sect_content + text_excluded
+                event_line = ass_head_str + event_line
+                text_excluded = ass_head_str + text_excluded
 
                 fail_c += \
                     file_io.str_to_file(out_codec, export_file_name + tail[k] + te_tail + ".ass",
@@ -868,8 +873,8 @@ def simple_ass_export_txt(ass_file_line_list,
                 file_io.str_to_file(out_codec, export_file_name + ".txt",
                                     custom_msg + text_comb, export_method[0])
             # export combination into txt
-            event_ln_comb = ass_sect_content + event_ln_comb
-            text_ex_comb = ass_sect_content + text_ex_comb
+            event_ln_comb = ass_head_str + event_ln_comb
+            text_ex_comb = ass_head_str + text_ex_comb
 
             fail_c += \
                 file_io.str_to_file(out_codec, export_file_name + te_tail + ".ass",
@@ -886,6 +891,7 @@ def simple_ass_export_txt(ass_file_line_list,
 def simple_ass_export_batch(import_dir,
                             export_dir,
                             custom_msg,
+                            ass_temp=None,
                             field_name="Style",
                             name_tail=("_CN", "_EN"),
                             filter_=("中文字幕", "英文字幕"),
@@ -899,6 +905,8 @@ def simple_ass_export_batch(import_dir,
         Params:
         import_dir          -- .ass files import direction
         export_dir          -- .ass files export direction
+        ass_temp            -- Another .ass file provide a template head to
+                               replace the input .ass file(s) content except the events.
         custom_msg          -- a special message is written on the first line of the files
                                None for nothing to write
         field_name          -- a field name to classify
@@ -932,6 +940,44 @@ def simple_ass_export_batch(import_dir,
     fail_c = 0
     # the count for file failure
     files_name_list = file_io.get_files_name_from_dire(import_dir)
+
+    ass_temp_list = []
+    ass_temp_str = None
+
+    if ass_temp:
+        fail_t, codec, is_lf = \
+            file_io.file_to_list(ass_temp, ass_temp_list, export_method[0])
+        if fail_t != 0:
+            print(".ass template file \"{ass_temp_n}\" don't exist. Check your argument.".format(ass_temp_n=ass_temp))
+            return 1
+        delete_ass_sect_list(ass_temp_list)
+
+        try:
+            row_num_head = ass_temp_list.index("[Events]") + 2
+        except ValueError:
+            try:
+                ass_temp_list.index("[Script Info]")
+            except ValueError:
+                # can't find event section: return [-3, ]
+                result_list = [-3, ]
+                return result_list, fail_c
+            try:
+                ass_temp_list.index("[V4+ Styles]")
+            except ValueError:
+                # can't find event section: return [-3, ]
+                result_list = [-3, ]
+                return result_list, fail_c
+
+            if ass_temp_list[:-1] != "":
+                ass_temp_list.append("")
+
+            ass_temp_list.append("[Events]")
+            ass_temp_list.append("Format: Layer, Start, End, Style, Name, \
+MarginL, MarginR, MarginV, Effect, Text")
+            row_num_head = len(ass_temp_list)
+
+        ass_temp_str = "\n".join(ass_temp_list[0:row_num_head]) + "\n"
+
     if len(files_name_list) == 0:
         print("This direction \"{dir}\" didn't contain any .ass file. Check your argument.".format(dir=import_dir))
         return 1
@@ -940,9 +986,10 @@ def simple_ass_export_batch(import_dir,
     for elem_name in files_name_list:
         temp = []
         print("...... .ass file name: \"{file_n}\"".format(file_n=elem_name))
-        fail_c, codec, is_lf = \
-            file_io.file_to_list(import_dir + "\\" + elem_name, temp, export_method[0])
-        if fail_c != 0:
+        fail_t, codec, is_lf = \
+            file_io.file_to_list(import_dir + "/" + elem_name, temp, export_method[0])
+        if fail_t != 0:
+            fail_c = fail_c + fail_t
             continue
         if export_method[1]:
             num_list = re.findall(r"\d+\.?\d*", elem_name)
@@ -950,16 +997,17 @@ def simple_ass_export_batch(import_dir,
                 elem_name = "E" + str(num_list[0])
         exp_m = [is_lf]
         exp_m.extend(export_method[2:9])
-        result_list, fail_t = simple_ass_export_txt(ass_file_line_list=temp,
-                                                    export_file_name=export_dir + "\\" + os.path.splitext(elem_name)[0],
-                                                    custom_msg=custom_msg,
-                                                    out_codec=codec,
-                                                    name_tail=name_tail,
-                                                    filter_=filter_,
-                                                    mod_filter=mod_filter,
-                                                    field_name=field_name,
-                                                    export_method=exp_m
-                                                    )
+        result_list, fail_n = simple_ass_export(ass_file_line_list=temp,
+                                                export_file_name=export_dir + "/" + os.path.splitext(elem_name)[0],
+                                                ass_temp_str=ass_temp_str,
+                                                custom_msg=custom_msg,
+                                                out_codec=codec,
+                                                name_tail=name_tail,
+                                                filter_=filter_,
+                                                mod_filter=mod_filter,
+                                                field_name=field_name,
+                                                export_method=exp_m
+                                                )
         print("......  output file name: \"{file_n}\"".format(file_n=elem_name))
         print("......  event's field: \"{field_n}\"".format(field_n=field_name))
         if len(result_list) == 1 and type(result_list[0]) is int:
@@ -967,6 +1015,9 @@ def simple_ass_export_batch(import_dir,
                 print("......  Section \"[Event]\" missed")
             elif result_list[0] == -2:
                 print("......  No \"{field_n}\" contents matched the field name".format(field_n=field_name))
+            elif result_list[0] == -3:
+                print("......  .ass template file \"{ass_temp_n}\" is lack of several sections.".format(ass_temp_n=ass_temp))
+                return 1
         elif not filter_ or len(filter_) == 0:
             print("......  The given \"Content Tuple\" is empty. Try to export all of the events.")
             for result in result_list:
@@ -980,6 +1031,7 @@ def simple_ass_export_batch(import_dir,
             if len(missed_s) != 0:
                 for has_missed in missed_s:
                     print("......  \"{matched}\" didn't match or exported".format(matched=has_missed))
+
         print()
         del temp
 
@@ -1049,13 +1101,13 @@ def delete_ass_sect_batch(import_dir,
     for elem_name in files_name_list:
         temp = []
         fail_c, codec, is_lf = \
-            file_io.file_to_list(import_dir + "\\" + elem_name, temp, is_forced_lf)
+            file_io.file_to_list(import_dir + "/" + elem_name, temp, is_forced_lf)
         if fail_c != 0:
             break
         state_list = delete_ass_sect_list(temp, sect)
         name = os.path.splitext(elem_name)[0]
         fail_c = \
-            file_io.list_to_file(codec, export_dir + "\\" + name + name_tail + ".ass", temp, is_lf)
+            file_io.list_to_file(codec, export_dir + "/" + name + name_tail + ".ass", temp, is_lf)
         if fail_c != 0:
             break
         print("The result of deleting the section of an .ass file: \"{elem}\"".format(elem=name))
