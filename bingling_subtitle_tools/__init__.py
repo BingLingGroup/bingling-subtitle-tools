@@ -53,7 +53,7 @@ Bug report: https://github.com/BingLingGroup/bingling-subtitle-tools""",
     parser.add_argument("-o", "--output", nargs="*",
                         default=[os.getcwd() + "\\new", ],
                         help="""Name(s) of the output directory.
-                        Functions when direction(s) exist(s)
+                        Only works when direction(s) exist(s)
                         and it has the same number of the input.
                         Otherwise it will try the default value.
                         [arg_num ≥ 0]
@@ -67,25 +67,28 @@ Bug report: https://github.com/BingLingGroup/bingling-subtitle-tools""",
                         [arg_num = 0]")
     parser.add_argument("-fn", "--field-name", nargs="?",
                         default="Style", const="Style", metavar="FIELD_NAME",
-                        help="""-et/-es: A Field name to separate .ass files into txt files.
+                        help="""-et/-ea: A Field name to separate .ass files into txt files.
                         Using the option without argument for default value.
-                        Functions when -et/-es is used.
+                        Only works when -et/-ea is used.
                         [arg_num = 0 or 1]
                         [default: %(default)s]""")
     parser.add_argument("-msg", "--custom-msg", nargs="?",
                         default=" ", const="", metavar="STRING",
-                        help="""-et/-es: A custom message is written
+                        help="""-et/-ea: A custom message is written
                         on the first line of the output files.
                         Using the option without argument for no extra message export.
                         [arg_num = 0 or 1]
                         [default: # Exported by BingLingSubtitleTools {ver}]""".format(ver=__version__))
     parser.add_argument("-nts", "--name-tails", nargs="*",
                         default=["_CN", "_EN", ], metavar="STRING",
-                        help="""-et/-es: The output files' name tail(s).
+                        help="""-et/-ea: The output files' name tail(s).
                         Using the option without argument 
                         for each event's specific field content as their name tail.
-                        Functions when name tails have the same number as
-                        the ones after \"filter\".
+                        Only works when name tails have the same number 
+                        as the ones, or one more number than that, after \"filter\".
+                        If there's an extra name tail which is also the last one,
+                        it will be used as the name tail of the text-excluded part.
+                        Otherwise, the name tail used by text-excluded part will be \"_t\".
                         The default \"..., ...\" means if not using this option,
                         it will try these 2 arguments: ..., ...
                         Same info omit below.
@@ -93,34 +96,47 @@ Bug report: https://github.com/BingLingGroup/bingling-subtitle-tools""",
                         [default: %(default)s]""")
     parser.add_argument("-ft", "--filter", nargs="*",
                         default=["中文字幕", "英文字幕", ], dest="filter_", metavar="FIELD_CONTENT",
-                        help="""-et/-es: Field content(s) to filter the events.
+                        help="""-et/-ea: Field content(s) to filter the events.
                         Using the option without argument 
                         for filter disabled and all the events will export to files 
                         separated by their field contents under the specific field name. 
                         [arg_num ≥ 0]
                         [default: %(default)s]""")
+    parser.add_argument("-mf", "--mod-field", nargs="*", metavar="FIELD_CONTENT",
+                        help="""-et/-ea: Field content(s) to change the output field content
+                        in the order of the elements given by the \"-ft/--filter\".
+                        Only works when arguments have the same number as the given filters.
+                        Under \"-et/--exp-txt\" and \"-cb/--comb\" option
+                        it will output the modified field content at the first line 
+                        of the text part. One extra line per text part.
+                        Under \"-ea/--exp-ass\" and \"-cb/--comb\" option 
+                        it will duplicate the first line of the event lines
+                        and change it into a comment line
+                        which text content is its modified field content.
+                        [arg_num ≥ 0]""")
     parser.add_argument("-cb", "--comb", action="store_true",
-                        help="""-et/-es: Enable the output file(s) 
+                        help="""-et/-ea: Enable the output file(s) 
                         which combines all the events output
                         in the order of the filter.
                         [arg_num = 0]""")
     parser.add_argument("-ocb", "--only-comb", action="store_true",
-                        help="""-et/-es: Disable output for separated event's output files.
+                        help="""-et/-ea: Disable output for separated event's output files.
                         Only works when \"-cb/--comb\" is used.
                         [arg_num = 0]""")
     parser.add_argument("-te", "--text-excluded", action="store_true",
-                        help="""-et/-es: Enable output for text-excluded part,
-                        which is separated into a file with a \"_t\" name tail.
+                        help="""-et/-ea: Enable output for text-excluded part,
+                        which is separated into a file with a name tail
+                        given by the \"-nts/--name-tails\" option.
                         [arg_num = 0]""")
     parser.add_argument("-ntx", "--no-text", action="store_true",
-                        help="""-et/-es: Disable output for text part.
+                        help="""-et/-ea: Disable output for text part.
                         Only works when \"-te/--text-excluded\" is used.
                         [arg_num = 0]""")
     parser.add_argument("-rn", "--rename-number", action="store_true",
-                        help="""-et/-es: Enable changing the export name into
+                        help="""-et/-ea: Enable changing the export name into
                         a kind of format like \"E\" + the number already in the file name.
                         [arg_num = 0]""")
-    parser.add_argument("-koc", "-et/-es: --keep-override-code", action="store_true",
+    parser.add_argument("-koc", "-et/-ea: --keep-override-code", action="store_true",
                         help="""Keep the override codes (similar words are override tags
                         by http://docs.aegisub.org/3.2/ASS_Tags/) instead of deleting them.  
                         [arg_num = 0]""")
@@ -176,6 +192,8 @@ def set_default_dict(arg_dict):
         arg_dict["name_tails"] = ["_CN", "_EN", ]
     if "filter_" not in arg_dict:
         arg_dict["filter_"] = ["中文字幕", "英文字幕", ]
+    if "mod_field" not in arg_dict:
+        arg_dict["mod_field"] = None
     if "comb" not in arg_dict:
         arg_dict["comb"] = False
     if "only_comb" not in arg_dict:
@@ -224,14 +242,19 @@ def main():
             return
 
     if args.no_text and not args.text_excluded:
-        print("""\"-ntx\" option only works when \"-te\" is used.
-\"-ntx\" option is invalid now.\n""")
+        print("""\"-ntx/--no-text\" option only works when \"-te/--text-excluded\" is used.
+\"-ntx/--no-text\" option is invalid now.\n""")
         args.no_text = False
 
     if args.only_comb and not args.comb:
-        print("""\"-ocb\" option only works when \"-cb\" is used.
-\"-ocb\" option is invalid now.\n""")
+        print("""\"-ocb/--only-comb\" option only works when \"-cb/--comb\" is used.
+\"-ocb/--only-comb\" option is invalid now.\n""")
         args.only_comb = False
+
+    if not args.exp_ass and args.mod_field:
+        print("""\"-mf/--mod-field\" option only works when \"-ea/--exp-ass\" is used.
+\"-mf/--mod-field\" option is invalid now.\n""")
+        args.mod_field = None
 
     if not (args.del_sect or args.exp_txt or args.exp_ass):
         print("No works done! Check your options.")
@@ -252,7 +275,7 @@ def main():
             args.output = list(itertools.repeat(args.output[0], len(args.input_)))
         else:
             print("""At least one output must be specified. 
-\"-lo\" option is invalid now.\n""")
+\"-lo/--limited-output\" option is invalid now.\n""")
     for input_file in args.input_:
         if os.path.isdir(input_file):
             # input direction(s)
@@ -278,7 +301,8 @@ Using \"{inp}\" instead.\n""".format(inp=args.output[i]))
                                                      custom_msg=args.custom_msg,
                                                      field_name=args.field_name,
                                                      name_tail=args.name_tails,
-                                                     filter_tuple=args.filter_,
+                                                     filter_=args.filter_,
+                                                     mod_filter=args.mod_field,
                                                      export_method=(not args.no_forced_encoding,
                                                                     args.rename_number,
                                                                     args.exp_txt,
@@ -326,7 +350,7 @@ Using \"{inp}\" instead.\n""".format(inp=args.output[i]))
                     else:
                         print("""\"{elem}\":
 ......Attempt to overwrite but failed.
-......Using \"-ow\" or \"--overwrite\" option to overwrite.\n""".format(elem=input_file))
+......Using \"-ow/--overwrite\" option to overwrite.\n""".format(elem=input_file))
 
                 print("\nDeleting .ass section(s) in \"{inp}\" are all done.\n".format(inp=input_file))
 

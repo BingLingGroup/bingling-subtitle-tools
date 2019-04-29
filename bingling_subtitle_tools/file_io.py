@@ -22,7 +22,7 @@ def get_files_name_from_dire(dire, exte=(".ass", ".ssa")):
 
     Params:
     dire                -- a directory String
-    exte                -- extensions filter_tuple
+    exte                -- extensions filter tuple
 
     Return:
     files_name_list     -- a file name list contains files whose extension

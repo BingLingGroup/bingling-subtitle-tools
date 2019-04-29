@@ -33,7 +33,7 @@ class SimpleAssEvent:
     simple_event_fields = ["Marked", "Start", "End", "Style", "Name",
                            "MarginL", "MarginR", "MarginV",
                            "Effect"]
-    field_content_list = []
+    field_contents = []
     field_name = None
 
     def __init__(self,
@@ -57,10 +57,11 @@ class SimpleAssEvent:
 
         self.field_content = \
             event_line_list[0][field_content_begin:field_content_end]
+        self.field_content_list = [field_content_begin, field_content_end, ]
         self.text_list = [first_text_begin, ]
         # save text begin position to text_list, 1 elem per line
-        SimpleAssEvent.field_content_list.append(self.field_content)
-        # save field content to field_content_list
+        SimpleAssEvent.field_contents.append(self.field_content)
+        # save field content to field_contents
         self.event_row = [cur_row, ]
         # save row number to event_row_list, 2 elements per part
         # part means the same field content event lines in succession
@@ -80,6 +81,8 @@ class SimpleAssEvent:
                 # if field content is the same and it starts with "Dialogue"
                 # then append to the list
                 self.text_list.append(_text_begin)
+                self.field_content_list.append(_field_content_begin)
+                self.field_content_list.append(_field_content_end)
             else:
                 break
 
@@ -89,6 +92,8 @@ class SimpleAssEvent:
     def add_more_events(self,
                         event_line_list,
                         cur_row,
+                        field_content_begin,
+                        field_content_end,
                         first_text_begin,
                         ):
         """Initialize a SimpleAssEvent object from event_line_list
@@ -96,11 +101,15 @@ class SimpleAssEvent:
                     Params:
                     event_line_list         -- an .ass event section line list
                     cur_row                 -- current row num
+                    field_content_begin     -- an .ass event field content begin pos in the first line
+                    field_content_end       -- an .ass event field content end pos in the first line
                     first_text_begin        -- the text content begin pos in the first line
                     """
 
         _last_length = len(self.text_list)
         self.text_list.append(first_text_begin)
+        self.field_content_list.append(field_content_begin)
+        self.field_content_list.append(field_content_end)
         self.event_row.append(cur_row)
 
         for line in event_line_list[1:]:
@@ -114,6 +123,8 @@ class SimpleAssEvent:
                 # if field content is the same and it starts with "Dialogue"
                 # then append to the list
                 self.text_list.append(_text_begin)
+                self.field_content_list.append(_field_content_begin)
+                self.field_content_list.append(_field_content_end)
             else:
                 break
 
@@ -322,7 +333,8 @@ def simple_ass_export_txt(ass_file_line_list,
                           custom_msg,
                           out_codec,
                           name_tail=("_CN", "_EN"),
-                          filter_tuple=("中文字幕", "英文字幕"),
+                          filter_=("中文字幕", "英文字幕"),
+                          mod_filter=(),
                           field_name="Style",
                           export_method=(True, True, False, False,
                                          False, False, True, True)
@@ -332,15 +344,17 @@ def simple_ass_export_txt(ass_file_line_list,
         Params:
         ass_file_line_list  -- an .ass file line list
         export_file_name    -- export file name
-        custom_msg         -- a special message is written on the first line of the files
+        custom_msg          -- a special message is written on the first line of the files
                                None for nothing to write
         out_codec           -- the output file codec
         name_tail           -- new files name tail tuple, ("_CN", "_EN") by default
-                               if name_tail is not empty and it has the same length as the filter_tuple
+                               if name_tail is not empty and it has the same length as the filter_
                                new files name will add one of these tails in order
                                otherwise the tail will be the field content
-        filter_tuple        -- a content tuple to filter, if it is None or a zero-length tuple
+        filter_             -- a content tuple to filter, if it is None or a zero-length tuple
                                it will export text grouped by field content
+        mod_filter          -- a content tuple to change the output field content
+                               in the order of the elements given by the filter_
         field_name          -- a field name to classify
                                Reference http://moodub.free.fr/video/ass-specs.doc
         export_method       -- a tuple includes 3 Boolean Objects
@@ -358,12 +372,12 @@ def simple_ass_export_txt(ass_file_line_list,
                                8th True for no separated events output
 
         Return:
-        result_list         -- a list for the ones in filter_tuple
+        result_list         -- a list for the ones in filter_
                                filter the events
-                               if filter_tuple is empty or None,
+                               if filter_ is empty or None,
                                result_list will contains all of the field contents
                                [-1, ] for event section miss
-                               [-2, ] for field content not match the filter_tuple
+                               [-2, ] for field content not match the filter_
         fail_c              -- the count for file failure
         """
 
@@ -379,6 +393,9 @@ def simple_ass_export_txt(ass_file_line_list,
         # can't find event section: return [-1, ]
         result_list = [-1, ]
         return result_list, fail_c
+
+    if mod_filter and len(mod_filter) != len(filter_):
+        mod_filter = None
 
     row_num += 2
     j = 0
@@ -400,16 +417,16 @@ def simple_ass_export_txt(ass_file_line_list,
                 row_num += 1
                 continue
 
-            if filter_tuple and len(filter_tuple) > 0:
-                # first match the filter_tuple
+            if filter_ and len(filter_) > 0:
+                # first match the filter_
                 try:
-                    j = filter_tuple.index(ass_file_line_list[row_num][field_content_begin:field_content_end])
+                    j = filter_.index(ass_file_line_list[row_num][field_content_begin:field_content_end])
                 except ValueError:
-                    # if this field content is not in the filter_tuple, then try the next line
+                    # if this field content is not in the filter_, then try the next line
                     row_num += 1
                     continue
 
-            # if the filter_tuple doesn't exist
+            # if the filter_ doesn't exist
             # or we want to add the field content
             # we will create a new SimpleAssEvent object
             simple_ass_event = SimpleAssEvent(ass_file_line_list[row_num:], row_num, field_content_begin,
@@ -439,19 +456,19 @@ def simple_ass_export_txt(ass_file_line_list,
                 row_num += 1
                 continue
 
-            if filter_tuple and len(filter_tuple) > 0:
-                # first match the filter_tuple
+            if filter_ and len(filter_) > 0:
+                # first match the filter_
                 try:
-                    j = filter_tuple.index(ass_file_line_list[row_num][field_content_begin:field_content_end])
+                    j = filter_.index(ass_file_line_list[row_num][field_content_begin:field_content_end])
                 except ValueError:
-                    # if this field content is not in the filter_tuple, then try the next line
+                    # if this field content is not in the filter_, then try the next line
                     row_num += 1
                     continue
 
                 try:
-                    i = SimpleAssEvent.field_content_list.index(filter_tuple[j])
+                    i = SimpleAssEvent.field_contents.index(filter_[j])
                 except ValueError:
-                    # if this field content is new to the field_content_list
+                    # if this field content is new to the field_contents
                     # then create a new SimpleAssEvent object
                     simple_ass_event = SimpleAssEvent(ass_file_line_list[row_num:], row_num, field_content_begin,
                                                       field_content_end, text_begin, field_name)
@@ -460,19 +477,19 @@ def simple_ass_export_txt(ass_file_line_list,
                     simple_ass_event_list.append(simple_ass_event)
                     continue
 
-                # if this field content is already in the field_content_list
+                # if this field content is already in the field_contents
                 # then add it
-                simple_ass_event_list[i].add_more_events(ass_file_line_list[row_num:],
-                                                         row_num, text_begin)
+                simple_ass_event_list[i].add_more_events(ass_file_line_list[row_num:], row_num, field_content_begin,
+                                                         field_content_end, text_begin)
                 row_num = simple_ass_event_list[i].event_row[-1]
 
             else:
-                # if the filter_tuple doesn't exist
+                # if the filter_ doesn't exist
                 try:
-                    i = SimpleAssEvent.field_content_list.\
+                    i = SimpleAssEvent.field_contents.\
                         index(ass_file_line_list[row_num][field_content_begin:field_content_end])
                 except ValueError:
-                    # if this field content is new to the field_content_list
+                    # if this field content is new to the field_contents
                     # then create a new SimpleAssEvent object
                     simple_ass_event = SimpleAssEvent(ass_file_line_list[row_num:], row_num, field_content_begin,
                                                       field_content_end, text_begin, field_name)
@@ -480,23 +497,31 @@ def simple_ass_export_txt(ass_file_line_list,
                     simple_ass_event_list.append(simple_ass_event)
                     continue
 
-                # if this field content is already in the field_content_list
+                # if this field content is already in the field_contents
                 # then add it
-                simple_ass_event_list[i].add_more_events(ass_file_line_list[row_num:],
-                                                         row_num, text_begin)
+                simple_ass_event_list[i].add_more_events(ass_file_line_list[row_num:], row_num, field_content_begin,
+                                                         field_content_end, text_begin)
                 row_num = simple_ass_event_list[i].event_row[-1]
 
         else:
             row_num += 1
 
-    if filter_tuple and name_tail and len(name_tail) == len(filter_tuple):
-        tail = list(name_tail)
-
+    if filter_ and name_tail:
+        if len(name_tail) == len(filter_):
+            tail = list(name_tail)
+            te_tail = "_t"
+        elif len(name_tail) == len(filter_) + 1:
+            tail = list(name_tail)
+            te_tail = name_tail[-1]
+        else:
+            tail = []
+            te_tail = "_t"
     else:
         tail = []
+        te_tail = "_t"
 
-    if filter_tuple and len(filter_tuple) > 0:
-        event_zip = zip(SimpleAssEvent.field_content_list, simple_ass_event_list)
+    if filter_ and len(filter_) > 0:
+        event_zip = zip(SimpleAssEvent.field_contents, simple_ass_event_list)
         # keep the same order as content tuple
         sorted_event_zip = sorted(event_zip, key=lambda item: item[1].num)
         # result_list contains the result
@@ -504,7 +529,7 @@ def simple_ass_export_txt(ass_file_line_list,
 
     else:
         sorted_event_list = simple_ass_event_list
-        result_list = SimpleAssEvent.field_content_list
+        result_list = SimpleAssEvent.field_contents
 
     k = 0
     if not export_method[2] and not export_method[3]:
@@ -540,6 +565,8 @@ def simple_ass_export_txt(ass_file_line_list,
 
             if export_method[6]:
                 # need to combine
+                if mod_filter:
+                    text_comb = text_comb + mod_filter[k] + "\n"
                 text_comb = text_comb + text
 
             if not export_method[7]:
@@ -568,6 +595,9 @@ def simple_ass_export_txt(ass_file_line_list,
             while j < len(event.event_row) - 1:
                 for line in ass_file_line_list[event.event_row[j]:event.event_row[j + 1]]:
                     # get the content which excludes the text
+                    if mod_filter:
+                        line = line[:event.field_content_list[2 * i]] + mod_filter[k] \
+                               + line[event.field_content_list[2 * i + 1]:]
                     text_excluded += line[:event.text_list[i] + 1]
                     if export_method[0]:
                         # unix LF
@@ -581,20 +611,26 @@ def simple_ass_export_txt(ass_file_line_list,
 
             if export_method[6]:
                 # need to combine
+                if export_method[2] and mod_filter:
+                    line = ass_file_line_list[event.event_row[0]:event.event_row[1]][0]
+                    line = line[:event.field_content_list[0]] + mod_filter[k] \
+                        + line[event.field_content_list[1]:event.text_list[0] + 1]
+                    line = line.replace("Dialogue:", "Comment:", 1) + mod_filter[k] + "\n"
+                    text_ex_comb = text_ex_comb + line
                 text_ex_comb = text_ex_comb + text_excluded
 
             if not export_method[7]:
                 if export_method[1]:
                     # export into txt
                     fail_c += \
-                        file_io.str_to_file(out_codec, export_file_name + tail[k] + "_t.txt",
+                        file_io.str_to_file(out_codec, export_file_name + tail[k] + te_tail + ".txt",
                                             custom_msg + text_excluded,  export_method[0])
 
                 if export_method[2]:
                     # export into .ass
                     text_excluded = ass_sect_content + text_excluded
                     fail_c += \
-                        file_io.str_to_file(out_codec, export_file_name + tail[k] + "_t.ass",
+                        file_io.str_to_file(out_codec, export_file_name + tail[k] + te_tail + ".ass",
                                             custom_msg + text_excluded, export_method[0])
             k += 1
 
@@ -603,13 +639,13 @@ def simple_ass_export_txt(ass_file_line_list,
             if export_method[1]:
                 # export into txt
                 fail_c += \
-                    file_io.str_to_file(out_codec, export_file_name + "_t.txt", custom_msg + text_ex_comb,
+                    file_io.str_to_file(out_codec, export_file_name + te_tail + ".txt", custom_msg + text_ex_comb,
                                         export_method[0])
             if export_method[2]:
                 # export into .ass
                 text_ex_comb = ass_sect_content + text_ex_comb
                 fail_c += \
-                    file_io.str_to_file(out_codec, export_file_name + "_t.ass", custom_msg + text_ex_comb,
+                    file_io.str_to_file(out_codec, export_file_name + te_tail + ".ass", custom_msg + text_ex_comb,
                                         export_method[0])
 
     elif not export_method[2]:
@@ -632,6 +668,9 @@ def simple_ass_export_txt(ass_file_line_list,
                         text += "".join(re.compile(r'{.*?}').split(line[event.text_list[i] + 1:]))
                     else:
                         text += line[event.text_list[i] + 1:]
+                    if mod_filter:
+                        line = line[:event.field_content_list[2 * i]] + mod_filter[k] \
+                               + line[event.field_content_list[2 * i + 1]:]
                     text_excluded += line[:event.text_list[i] + 1]
                     if export_method[0]:
                         # unix LF
@@ -647,12 +686,14 @@ def simple_ass_export_txt(ass_file_line_list,
 
             if export_method[6]:
                 # need to combine
+                if mod_filter:
+                    text_comb = text_comb + mod_filter[k] + "\n"
                 text_comb = text_comb + text
                 text_ex_comb = text_ex_comb + text_excluded
 
             if not export_method[7]:
                 fail_c += \
-                    file_io.str_to_file(out_codec, export_file_name + tail[k] + "_t.txt",
+                    file_io.str_to_file(out_codec, export_file_name + tail[k] + te_tail + ".txt",
                                         custom_msg + text_excluded, export_method[0])
                 fail_c += \
                     file_io.str_to_file(out_codec, export_file_name + tail[k] + ".txt", custom_msg + text, export_method[0])
@@ -663,7 +704,7 @@ def simple_ass_export_txt(ass_file_line_list,
         if export_method[6]:
             # export combination the file
             fail_c += \
-                file_io.str_to_file(out_codec, export_file_name + "_t.txt",
+                file_io.str_to_file(out_codec, export_file_name + te_tail + ".txt",
                                     custom_msg + text_ex_comb, export_method[0])
             fail_c += \
                 file_io.str_to_file(out_codec, export_file_name + ".txt",
@@ -681,6 +722,7 @@ def simple_ass_export_txt(ass_file_line_list,
             tail.append("_" + event.field_content)
             text = ""
             event_line = ""
+
             while j < len(event.event_row) - 1:
                 for line in ass_file_line_list[event.event_row[j]:event.event_row[j + 1]]:
                     # get the content which excludes the text
@@ -689,6 +731,9 @@ def simple_ass_export_txt(ass_file_line_list,
                         text += "".join(re.compile(r'{.*?}').split(line[event.text_list[i] + 1:]))
                     else:
                         text += line[event.text_list[i] + 1:]
+                    if mod_filter:
+                        line = line[:event.field_content_list[2 * i]] + mod_filter[k] \
+                               + line[event.field_content_list[2 * i + 1]:]
                     event_line += line
                     if export_method[0]:
                         # unix LF
@@ -704,6 +749,13 @@ def simple_ass_export_txt(ass_file_line_list,
 
             if export_method[6]:
                 # need to combine
+                if mod_filter:
+                    text_comb = text_comb + mod_filter[k] + "\n"
+                    line = ass_file_line_list[event.event_row[0]:event.event_row[1]][0]
+                    line = line[:event.field_content_list[0]] + mod_filter[k] \
+                        + line[event.field_content_list[1]:event.text_list[0] + 1]
+                    line = line.replace("Dialogue:", "Comment:", 1) + mod_filter[k] + "\n"
+                    event_ln_comb = event_ln_comb + line
                 text_comb = text_comb + text
                 event_ln_comb = event_ln_comb + event_line
 
@@ -754,6 +806,9 @@ def simple_ass_export_txt(ass_file_line_list,
                         text += "".join(re.compile(r'{.*?}').split(line[event.text_list[i] + 1:]))
                     else:
                         text += line[event.text_list[i] + 1:]
+                    if mod_filter:
+                        line = line[:event.field_content_list[2 * i]] + mod_filter[k] \
+                               + line[event.field_content_list[2 * i + 1]:]
                     text_excluded += line[:event.text_list[i] + 1]
                     event_line += line
                     if export_method[0]:
@@ -772,13 +827,21 @@ def simple_ass_export_txt(ass_file_line_list,
 
             if export_method[6]:
                 # need to combine
+                if mod_filter:
+                    text_comb = text_comb + mod_filter[k] + "\n"
+                    line = ass_file_line_list[event.event_row[0]:event.event_row[1]][0]
+                    line = line[:event.field_content_list[0]] + mod_filter[k] \
+                        + line[event.field_content_list[1]:event.text_list[0] + 1]
+                    line = line.replace("Dialogue:", "Comment:", 1) + mod_filter[k] + "\n"
+                    event_ln_comb = event_ln_comb + line
+                    text_ex_comb = text_ex_comb + line
                 text_comb = text_comb + text
                 text_ex_comb = text_ex_comb + text_excluded
                 event_ln_comb = event_ln_comb + event_line
 
             if not export_method[7]:
                 fail_c += \
-                    file_io.str_to_file(out_codec, export_file_name + tail[k] + "_t.txt",
+                    file_io.str_to_file(out_codec, export_file_name + tail[k] + te_tail + ".txt",
                                         custom_msg + text_excluded, export_method[0])
                 fail_c += \
                     file_io.str_to_file(out_codec, export_file_name + tail[k] + ".txt", custom_msg + text, export_method[0])
@@ -788,18 +851,18 @@ def simple_ass_export_txt(ass_file_line_list,
                 text_excluded = ass_sect_content + text_excluded
 
                 fail_c += \
-                    file_io.str_to_file(out_codec, export_file_name + tail[k] + "_t.ass",
+                    file_io.str_to_file(out_codec, export_file_name + tail[k] + te_tail + ".ass",
                                         text_excluded, export_method[0])
                 fail_c += \
                     file_io.str_to_file(out_codec, export_file_name + tail[k] + ".ass",
-                                    event_line, export_method[0])
+                                        event_line, export_method[0])
             # export into .ass
             k += 1
 
         if export_method[6]:
             # export combination the file
             fail_c += \
-                file_io.str_to_file(out_codec, export_file_name + "_t.txt",
+                file_io.str_to_file(out_codec, export_file_name + te_tail + ".txt",
                                     custom_msg + text_ex_comb, export_method[0])
             fail_c += \
                 file_io.str_to_file(out_codec, export_file_name + ".txt",
@@ -809,13 +872,13 @@ def simple_ass_export_txt(ass_file_line_list,
             text_ex_comb = ass_sect_content + text_ex_comb
 
             fail_c += \
-                file_io.str_to_file(out_codec, export_file_name + "_t.ass",
+                file_io.str_to_file(out_codec, export_file_name + te_tail + ".ass",
                                     text_ex_comb, export_method[0])
             fail_c += \
                 file_io.str_to_file(out_codec, export_file_name + ".ass",
                                     event_ln_comb, export_method[0])
 
-    SimpleAssEvent.field_content_list.clear()
+    SimpleAssEvent.field_contents.clear()
     SimpleAssEvent.field_name = None
     return result_list, fail_c
 
@@ -825,7 +888,8 @@ def simple_ass_export_batch(import_dir,
                             custom_msg,
                             field_name="Style",
                             name_tail=("_CN", "_EN"),
-                            filter_tuple=("中文字幕", "英文字幕"),
+                            filter_=("中文字幕", "英文字幕"),
+                            mod_filter=None,
                             export_method=(True, True, False, False,
                                            True, False, False, True,
                                            True)
@@ -835,15 +899,17 @@ def simple_ass_export_batch(import_dir,
         Params:
         import_dir          -- .ass files import direction
         export_dir          -- .ass files export direction
-        custom_msg         -- a special message is written on the first line of the files
+        custom_msg          -- a special message is written on the first line of the files
                                None for nothing to write
         field_name          -- a field name to classify
                                Reference http://moodub.free.fr/video/ass-specs.doc
         name_tail           -- new files name tail tuple, ("_CN", "_EN") by default
-                               if name_tail is not empty and it has the same length as the filter_tuple
+                               if name_tail is not empty and it has the same length as the filter_
                                new files name will add one of these tails in order
-        filter_tuple        -- a content tuple to match, if it is None or a zero-length tuple
+        filter_             -- a content tuple to match, if it is None or a zero-length tuple
                                it will export text grouped by field content
+        mod_filter          -- a content tuple to change the output field content
+                               in the order of the elements given by the filter_
         export_method       -- a tuple includes 6 Boolean Objects
                                1st True for forcing utf-8 without BOM and unix LF file output
                                or it will use the same encoding
@@ -851,7 +917,7 @@ def simple_ass_export_batch(import_dir,
                                2nd True for changing export name into
                                "E" + the number already in the file name
                                otherwise export name will stay the same
-                               or add name_tail if filter_tuple is not empty
+                               or add name_tail if filter_ is not empty
                                3rd True for exporting into txt content
                                4th True for exporting into .ass format
                                5th True for exporting extra text-excluded content
@@ -889,7 +955,8 @@ def simple_ass_export_batch(import_dir,
                                                     custom_msg=custom_msg,
                                                     out_codec=codec,
                                                     name_tail=name_tail,
-                                                    filter_tuple=filter_tuple,
+                                                    filter_=filter_,
+                                                    mod_filter=mod_filter,
                                                     field_name=field_name,
                                                     export_method=exp_m
                                                     )
@@ -900,7 +967,7 @@ def simple_ass_export_batch(import_dir,
                 print("......  Section \"[Event]\" missed")
             elif result_list[0] == -2:
                 print("......  No \"{field_n}\" contents matched the field name".format(field_n=field_name))
-        elif not filter_tuple or len(filter_tuple) == 0:
+        elif not filter_ or len(filter_) == 0:
             print("......  The given \"Content Tuple\" is empty. Try to export all of the events.")
             for result in result_list:
                 print("......  \"{matched}\" exported successfully".format(matched=result))
@@ -908,7 +975,7 @@ def simple_ass_export_batch(import_dir,
             for has_matched in result_list:
                 print("......  \"{matched}\" exported successfully".format(matched=has_matched))
             mls = set(result_list)
-            cts = set(filter_tuple)
+            cts = set(filter_)
             missed_s = {x for x in cts if x not in mls}
             if len(missed_s) != 0:
                 for has_missed in missed_s:
