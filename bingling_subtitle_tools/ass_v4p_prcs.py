@@ -577,7 +577,7 @@ def simple_ass_export_txt(ass_file_line_list,
             k += 1
 
         if export_method[6]:
-            # export combination the file
+            # export combination into txt
             fail_c += \
                 file_io.str_to_file(out_codec, export_file_name + ".txt", custom_msg + text_comb,
                                     export_method[0])
@@ -635,14 +635,14 @@ def simple_ass_export_txt(ass_file_line_list,
             k += 1
 
         if export_method[6]:
-            # export combination the file
+            # export combination into txt
             if export_method[1]:
                 # export into txt
                 fail_c += \
                     file_io.str_to_file(out_codec, export_file_name + te_tail + ".txt", custom_msg + text_ex_comb,
                                         export_method[0])
             if export_method[2]:
-                # export into .ass
+                # export combination into .ass
                 text_ex_comb = ass_sect_content + text_ex_comb
                 fail_c += \
                     file_io.str_to_file(out_codec, export_file_name + te_tail + ".ass", custom_msg + text_ex_comb,
@@ -702,7 +702,7 @@ def simple_ass_export_txt(ass_file_line_list,
             k += 1
 
         if export_method[6]:
-            # export combination the file
+            # export combination into txt
             fail_c += \
                 file_io.str_to_file(out_codec, export_file_name + te_tail + ".txt",
                                     custom_msg + text_ex_comb, export_method[0])
@@ -773,12 +773,12 @@ def simple_ass_export_txt(ass_file_line_list,
             k += 1
 
         if export_method[6]:
-            # export combination the file
+            # export combination into txt
             # export into txt
             fail_c += \
                 file_io.str_to_file(out_codec, export_file_name + ".txt",
                                     custom_msg + text_comb, export_method[0])
-            # export into .ass
+            # export combination into .ass
             event_ln_comb = ass_sect_content + event_ln_comb
             fail_c += \
                 file_io.str_to_file(out_codec, export_file_name + ".ass",
@@ -860,14 +860,14 @@ def simple_ass_export_txt(ass_file_line_list,
             k += 1
 
         if export_method[6]:
-            # export combination the file
+            # export combination into txt
             fail_c += \
                 file_io.str_to_file(out_codec, export_file_name + te_tail + ".txt",
                                     custom_msg + text_ex_comb, export_method[0])
             fail_c += \
                 file_io.str_to_file(out_codec, export_file_name + ".txt",
                                     custom_msg + text_comb, export_method[0])
-            # export into txt
+            # export combination into txt
             event_ln_comb = ass_sect_content + event_ln_comb
             text_ex_comb = ass_sect_content + text_ex_comb
 

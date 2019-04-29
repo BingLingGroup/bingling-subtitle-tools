@@ -27,7 +27,6 @@ class Bunch(object):
 
 def get_cmd_args():
     __version__ = version.__version__
-
     parser = argparse.ArgumentParser(description="""A tool that do batch processing jobs on ASS\
 (Advanced SubStation Alpha) files""",
                                      epilog="""Make sure the argument with space is in quotes.
@@ -40,11 +39,14 @@ Author: BingLingFanSub
 Bug report: https://github.com/BingLingGroup/bingling-subtitle-tools""",
                                      formatter_class=argparse.RawDescriptionHelpFormatter)
 
-    parser.add_argument("-c", "--config",
+    parser.add_argument("-c", "--config", nargs="?", default="", const=" ",
                         help="""A config file stores the command line options and arguments.
                         Currently only support .py format.
                         If using, other options will be overridden.
-                        [arg_num = 1]""")
+                        If not using, it won't work.
+                        Using the option without argument for default value.
+                        [arg_num = 0 or 1]
+                        [default: config.py in the Current directory]""")
     parser.add_argument("-i", "--input", nargs="*",
                         default=[os.getcwd(), ], dest="input_",
                         help="""Path(s) of the input .ass file(s).
@@ -226,6 +228,8 @@ def main():
     print()
     arg_dict = {}
     if args.config and len(args.config) > 0:
+        if args.config == " ":
+            args.config = os.getcwd() + "/config.py"
         if args.config.endswith(".py"):
             fail_c, in_codec, arg_str = file_io.file_to_str(args.config)
             if fail_c == 0:
@@ -251,11 +255,6 @@ def main():
 \"-ocb/--only-comb\" option is invalid now.\n""")
         args.only_comb = False
 
-    if not args.exp_ass and args.mod_field:
-        print("""\"-mf/--mod-field\" option only works when \"-ea/--exp-ass\" is used.
-\"-mf/--mod-field\" option is invalid now.\n""")
-        args.mod_field = None
-
     if not (args.del_sect or args.exp_txt or args.exp_ass):
         print("No works done! Check your options.")
         return
@@ -266,7 +265,8 @@ def main():
     if args.custom_msg == " ":
         # process the "default" custom_msg
         args.custom_msg = "# Exported by BingLingSubtitleTools {ver}\n".format(ver=__version__)
-    else:
+    elif args.custom_msg != "":
+        # process the normal custom_msg except the empty ones
         args.custom_msg = args.custom_msg + "\n"
 
     i = 0
